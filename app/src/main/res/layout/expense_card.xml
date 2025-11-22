@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="20dp"
+    android:layout_marginVertical="10dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="#D32F2F"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="8dp"
+    app:rippleColor="@android:color/white">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:clickable="false"
+        android:focusable="false"
+        android:duplicateParentState="true">
+
+        <!-- HEADER -->
+        <LinearLayout
+            android:id="@+id/expense_header_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="top"
+            android:orientation="horizontal"
+            android:clickable="false"
+            android:focusable="false"
+            android:duplicateParentState="true"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <HorizontalScrollView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="false"
+                android:duplicateParentState="true"
+                android:focusable="false"
+                android:scrollbars="none">
+
+                <TextView
+                    android:id="@+id/expenseName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:duplicateParentState="true"
+                    android:focusable="false"
+                    android:fontFamily="@font/josefin_sans_regular"
+                    android:singleLine="true"
+                    android:text="Chicken"
+                    android:textColor="@android:color/white"
+                    android:textSize="34sp" />
+            </HorizontalScrollView>
+
+            <TextView
+                android:id="@+id/expenseAmount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:fontFamily="@font/josefin_sans_regular"
+                android:text="399"
+                android:textColor="@android:color/white"
+                android:textSize="34sp"
+                android:clickable="false"
+                android:focusable="false"
+                android:duplicateParentState="true" />
+
+        </LinearLayout>
+
+        <!-- PAYER + CONSUMERS -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:clickable="false"
+            android:focusable="false"
+            android:duplicateParentState="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/expense_header_layout">
+
+            <TextView
+                android:id="@+id/payerName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="32dp"
+                android:fontFamily="@font/josefin_sans_regular"
+                android:text="Sushobhan"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:clickable="false"
+                android:focusable="false"
+                android:duplicateParentState="true" />
+
+            <HorizontalScrollView
+                android:scrollbars="none"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fillViewport="true"
+                android:clickable="false"
+                android:focusable="false"
+                android:duplicateParentState="true">
+
+                <LinearLayout
+                    android:id="@+id/names_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:orientation="horizontal"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:duplicateParentState="true">
+
+                    <TextView
+                        android:id="@+id/contributorList"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/josefin_sans_regular"
+                        android:text="Alice Garry Bob Charlie David"
+                        android:textColor="@android:color/white"
+                        android:textSize="16sp"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:duplicateParentState="true" />
+                </LinearLayout>
+            </HorizontalScrollView>
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

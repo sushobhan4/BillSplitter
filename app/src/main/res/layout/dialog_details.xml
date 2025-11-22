@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/bg_white_card">
+
+    <TextView
+        android:id="@+id/tvName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/josefin_sans_regular"
+        android:text="Name"
+        android:textColor="#000000"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvAmount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#000000"
+        android:layout_marginTop="16dp"
+        android:fontFamily="@font/josefin_sans_regular"
+        android:text="Amount: "
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvPayer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#000000"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/josefin_sans_regular"
+        android:text="Paid by: "
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvDateCreated"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#000000"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/josefin_sans_regular"
+        android:text="Created: " />
+
+    <TextView
+        android:id="@+id/tvDateModified"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#000000"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/josefin_sans_regular"
+        android:text="Modified: " />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#000000"
+        android:layout_marginTop="16dp"
+        android:fontFamily="@font/josefin_sans_regular"
+        android:text="Contributors: "
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvContributors"
+        android:layout_width="match_parent"
+        android:textColor="#000000"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/josefin_sans_regular" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#000000"
+        android:layout_marginTop="16dp"
+        android:fontFamily="@font/josefin_sans_regular"
+        android:text="Notes: "
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvNotes"
+        android:layout_width="match_parent"
+        android:textColor="#000000"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/josefin_sans_regular" />
+
+</LinearLayout>

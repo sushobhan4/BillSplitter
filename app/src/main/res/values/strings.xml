@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Bill Splitter</string>
+    <string name="created">Created: %s</string>
+    <string name="modified">Modified: %s</string>
+    <plurals name="contributors">
+        <item quantity="one">%d contributor</item>
+        <item quantity="other">%d contributors</item>
+    </plurals>
+    <string name="save">Save</string>
+    <string name="create_sheet">Create Sheet</string>
+    <string name="deleted">Deleted</string>
+    <string name="sheet_updated">Sheet Updated</string>
+    <string name="sheet_created">Sheet Created</string>
+    <string name="need_at_least_2_valid_contributors">Need at least 2 valid contributors</string>
+    <string name="enter_sheet_name">Enter sheet name</string>
+    <string name="required">Required</string>
+</resources>
