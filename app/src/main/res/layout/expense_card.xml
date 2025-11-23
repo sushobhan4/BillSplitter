@@ -40,7 +40,6 @@
             <HorizontalScrollView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:clickable="false"
                 android:duplicateParentState="true"
                 android:focusable="false"
@@ -59,6 +58,14 @@
                     android:textColor="@android:color/white"
                     android:textSize="34sp" />
             </HorizontalScrollView>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clickable="false"
+                android:duplicateParentState="true"
+                android:focusable="false" />
 
             <TextView
                 android:id="@+id/expenseAmount"
