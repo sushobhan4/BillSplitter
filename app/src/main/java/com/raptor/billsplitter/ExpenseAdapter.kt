@@ -114,12 +114,6 @@ class ExpenseAdapter(
             popupWindow.dismiss()
         }
 
-        // Measure to improve positioning behavior across devices
-        popupView.measure(
-            View.MeasureSpec.makeMeasureSpec((context.resources.displayMetrics.widthPixels * 0.8).toInt(), View.MeasureSpec.AT_MOST),
-            View.MeasureSpec.makeMeasureSpec((context.resources.displayMetrics.heightPixels * 0.8).toInt(), View.MeasureSpec.AT_MOST)
-        )
-
         // show anchored to the view that was long-pressed
         anchorView.post {
             try {

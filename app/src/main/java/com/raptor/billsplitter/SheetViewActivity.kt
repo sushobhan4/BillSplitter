@@ -39,6 +39,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.roundToLong
 
 class SheetViewActivity : AppCompatActivity() {
@@ -46,6 +47,7 @@ class SheetViewActivity : AppCompatActivity() {
     private lateinit var expenseRecyclerView: RecyclerView
     private lateinit var expenseAdapter: ExpenseAdapter
     private lateinit var tvSheetName: TextView
+    private lateinit var tvEmptyExpenses: TextView
     private var sheetId: Int = -1
     private lateinit var sharedPreferences: android.content.SharedPreferences
     private lateinit var viewModel: SheetViewModel
@@ -80,6 +82,7 @@ class SheetViewActivity : AppCompatActivity() {
         val btnCalculate: Button = findViewById(R.id.btn_calculate)
         val btnSort: ImageButton = findViewById(R.id.btn_sort_expenses)
         expenseRecyclerView = findViewById(R.id.rv_expenses)
+        tvEmptyExpenses = findViewById(R.id.tv_empty_expenses)
         expenseRecyclerView.layoutManager = LinearLayoutManager(this)
 
         expenseAdapter = ExpenseAdapter(this) { action, item ->
@@ -112,6 +115,13 @@ class SheetViewActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             viewModel.items.collectLatest { items ->
+                if (items.isEmpty()) {
+                    expenseRecyclerView.visibility = View.GONE
+                    tvEmptyExpenses.visibility = View.VISIBLE
+                } else {
+                    expenseRecyclerView.visibility = View.VISIBLE
+                    tvEmptyExpenses.visibility = View.GONE
+                }
                 btnSort.visibility = if (items.size >= 2) View.VISIBLE else View.GONE
                 applySortingAndSubmit(items)
                 btnCalculate.visibility = if (items.isNotEmpty()) View.VISIBLE else View.GONE
@@ -198,16 +208,11 @@ class SheetViewActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    /**
-     * calculateBalances: fully cents-safe, deterministic remainder distribution and detailed logs.
-     * Convention: positive balance => should RECEIVE money; negative => owes money.
-     */
     private suspend fun calculateBalances() {
         val TAG = "CalcBalances"
         val items = viewModel.items.first()
         val contributors = viewModel.contributors.first()
 
-        // balances as Double (use exact division like spreadsheet) — positive = should RECEIVE, negative = owes
         val balances = mutableMapOf<String, Double>()
         for (c in contributors) balances[c.contributorName] = 0.0
 
@@ -216,25 +221,21 @@ class SheetViewActivity : AppCompatActivity() {
             val amount = item.item.amount ?: 0.0
             if (amount <= 0.0) continue
 
-            // get consumers from DB if present else UI consumers
             val itemConsumers: List<ItemConsumer> = viewModel.getItemConsumers(item.item.itemID).first()
             val uiConsumers = item.consumers ?: emptyList()
 
             val consumerNames: List<String> = if (itemConsumers.isNotEmpty()) {
-                // when DB consumers present, use their ids mapped to names
                 itemConsumers.mapNotNull { ic -> contributors.find { it.contributorID == ic.contributorID }?.contributorName }
             } else {
                 uiConsumers.map { it.contributorName }
             }
 
-            // if no consumers, credit payer full amount
             if (consumerNames.isEmpty()) {
                 balances[payerName] = (balances[payerName] ?: 0.0) + amount
                 Log.d(TAG, "Item='${item.item.itemName}': no consumers — credited $payerName $amount")
                 continue
             }
 
-            // Decide split: if itemConsumers have non-equal weights, use weighted division (proportional).
             val useWeighted = itemConsumers.isNotEmpty() && run {
                 if (itemConsumers.size <= 1) false
                 else {
@@ -243,45 +244,29 @@ class SheetViewActivity : AppCompatActivity() {
                 }
             }
 
-            val perConsumer = mutableListOf<Pair<String, Double>>() // name -> share (positive number)
+            val perConsumer = mutableListOf<Pair<String, Double>>()
 
             if (useWeighted) {
                 val sumWeights = itemConsumers.sumOf { it.weight }
-                // compute proportional shares (double), no integer rounding
                 itemConsumers.forEach { ic ->
                     val name = contributors.find { it.contributorID == ic.contributorID }?.contributorName ?: "unknown-${ic.contributorID}"
                     val share = (ic.weight / sumWeights) * amount
                     perConsumer.add(Pair(name, share))
                 }
             } else {
-                // equal split: divide amount by number of consumer names
                 val n = consumerNames.size
                 val share = amount / n
                 consumerNames.forEach { name -> perConsumer.add(Pair(name, share)) }
             }
 
-            // apply consumers' debits (they owe their share)
             perConsumer.forEach { (name, share) ->
                 balances[name] = (balances[name] ?: 0.0) - share
             }
 
-            // credit payer full amount
             balances[payerName] = (balances[payerName] ?: 0.0) + amount
-
-            // log breakdown similar to your previous logs
-            val sb = StringBuilder()
-            sb.append("Item='${item.item.itemName}' amt=$amount payer=$payerName consumers=[")
-            perConsumer.forEach { sb.append("${it.first}:${String.format(Locale.getDefault(), "%.6f", it.second)}, ") }
-            sb.append("] -> running: ")
-            contributors.forEach { c ->
-                sb.append("${c.contributorName}=${String.format(Locale.getDefault(), "%.6f", balances[c.contributorName] ?: 0.0)}; ")
-            }
-            Log.d(TAG, sb.toString())
         }
 
-        // final balances rounded to 6 decimals internally then display with 2 decimals
         val finalBalances = balances.mapValues { (_, v) ->
-            // keep high precision in computation; display rounded to 2 decimals
             String.format(Locale.getDefault(), "%.2f", v).toDouble()
         }
 
@@ -289,11 +274,6 @@ class SheetViewActivity : AppCompatActivity() {
         showBalancesDialog(finalBalances)
     }
 
-    /**
-     * One-time repair: synchronize DB itemConsumers with UI consumers when UI has more entries.
-     * Run this once (e.g. call from a debug button or temporarily from onCreate) to fix mismatches.
-     * It uses viewModel.updateItem(...) to rewrite the item's consumer list using equal weights.
-     */
     private suspend fun repairConsumerMismatches() {
         val items = viewModel.items.first()
         val contributors = viewModel.contributors.first()
@@ -302,15 +282,12 @@ class SheetViewActivity : AppCompatActivity() {
             val dbConsumers = viewModel.getItemConsumers(item.item.itemID).first()
             val uiConsumers = item.consumers ?: emptyList()
 
-            // If UI lists more consumers than DB, assume UI is the source of truth and update DB
             if (uiConsumers.size > dbConsumers.size) {
-                // prepare consumers ids and equal weights
                 val consumerIds = uiConsumers.map { it.contributorID }
                 val n = consumerIds.size
                 val equalWeight = if (n > 0) 100.0 / n else 0.0
                 val consumerWeights = consumerIds.map { Pair(it, equalWeight) }
 
-                // call updateItem to overwrite consumers (run in a coroutine scope)
                 try {
                     viewModel.updateItem(
                         item.item.itemID,
@@ -321,7 +298,6 @@ class SheetViewActivity : AppCompatActivity() {
                         consumerWeights,
                         item.item.notes
                     )
-                    Log.d("CalcBalances", "Repaired item '${item.item.itemName}' — set consumers=${consumerIds}")
                 } catch (e: Exception) {
                     Log.e("CalcBalances", "Failed to repair item '${item.item.itemName}': ${e.message}")
                 }
@@ -330,7 +306,6 @@ class SheetViewActivity : AppCompatActivity() {
     }
 
     private fun roundToPlaces(value: Double, places: Int = 2): Double {
-
         if (places < 0) throw IllegalArgumentException()
         var factor = 1.0
         repeat(places) { factor *= 10 }
@@ -341,11 +316,9 @@ class SheetViewActivity : AppCompatActivity() {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_balances)
         dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-
         val rvBalances = dialog.findViewById<RecyclerView>(R.id.rvBalances)
         rvBalances.layoutManager = LinearLayoutManager(this)
         rvBalances.adapter = BalanceAdapter(balances)
-
         dialog.show()
     }
 
@@ -378,19 +351,13 @@ class SheetViewActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    /**
-     * Updated showAddExpenseDialog with automatic percentage redistribution logic.
-     * Also: spinner "Paid By" placeholder logic added (disabled placeholder at position 0).
-     * Contributor lists and spinner names are sorted ascending (A -> Z).
-     * EditText selection-on-tap behavior added: tapping a percentage box will select all text.
-     */
     private suspend fun showAddExpenseDialog(contributorsSnapshot: List<Contributor>, itemToEdit: ItemWithPayerAndConsumers?) {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_add_expense)
         dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
 
         val etItemName = dialog.findViewById<EditText>(R.id.et_item_name)
-        val etAmount = dialog.findViewById<EditText>(R.id.et_amount)
+        val etAmount = dialog.findViewById<EditText>(R.id.et_amount) // Main Total Amount
         val etNotes = dialog.findViewById<EditText>(R.id.et_notes)
         val spinnerPayer = dialog.findViewById<Spinner>(R.id.spinner_payer)
         val containerContributors = dialog.findViewById<LinearLayout>(R.id.ll_contributor_checkboxes)
@@ -399,10 +366,10 @@ class SheetViewActivity : AppCompatActivity() {
         val switchEqualSplit = dialog.findViewById<SwitchMaterial>(R.id.switch_equal_split)
         val tvPercentageWarning = dialog.findViewById<TextView>(R.id.tv_percentage_warning)
 
-        // Sort contributors ascending by name (case-insensitive)
+        // Sort contributors ascending
         val sortedContributors = contributorsSnapshot.sortedBy { it.contributorName.lowercase(Locale.getDefault()) }
 
-        // Prepare spinner data with placeholder at index 0
+        // Prepare spinner
         val placeholder = "Paid By"
         val names = sortedContributors.map { it.contributorName }
         val spinnerItems = mutableListOf<String>().apply {
@@ -410,51 +377,41 @@ class SheetViewActivity : AppCompatActivity() {
             addAll(names)
         }
 
-        // Custom adapter to disable position 0 and style it gray
-        val spinnerAdapter = object : ArrayAdapter<String>(this@SheetViewActivity, R.layout.spinner_item_josefin_sans, spinnerItems) {
-            override fun isEnabled(position: Int): Boolean {
-                // disable placeholder
-                return position != 0
-            }
-
+        val spinnerAdapter = object : ArrayAdapter<String>(this@SheetViewActivity, android.R.layout.simple_spinner_item, spinnerItems) {
+            override fun isEnabled(position: Int): Boolean = position != 0
             override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val view = super.getDropDownView(position, convertView, parent)
                 val tv = view.findViewById<TextView>(android.R.id.text1) ?: (view as? TextView)
-                val textView = tv ?: (view as TextView)
-                if (position == 0) {
-                    textView.setTextColor(Color.parseColor("#888888"))
-                } else {
-                    textView.setTextColor(Color.parseColor("#222222"))
-                }
+                tv?.setTextColor(if (position == 0) Color.parseColor("#888888") else Color.parseColor("#222222"))
                 return view
             }
-
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val view = super.getView(position, convertView, parent)
                 val tv = view.findViewById<TextView>(android.R.id.text1) ?: (view as? TextView)
-                val textView = tv ?: (view as TextView)
-                if (position == 0) {
-                    textView.setTextColor(Color.parseColor("#888888"))
-                } else {
-                    textView.setTextColor(Color.parseColor("#222222"))
-                }
+                tv?.setTextColor(if (position == 0) Color.parseColor("#888888") else Color.parseColor("#222222"))
                 return view
             }
         }
-        spinnerAdapter.setDropDownViewResource(R.layout.spinner_item_josefin_sans)
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerPayer.adapter = spinnerAdapter
-        spinnerPayer.setSelection(0) // default show placeholder
+        spinnerPayer.setSelection(0)
 
         val contributorViews = mutableListOf<View>()
         var isUpdatingProgrammatically = false
+        // FLAG ARRAY: Tracks if the user has manually entered data for this row
+        val manualEntries = BooleanArray(sortedContributors.size) { false }
 
         containerContributors.removeAllViews()
+
+        // Populate Layouts
+        // Logic: if editing, check weights to determine switch state
+        var isEditMode = false
         if (itemToEdit != null) {
+            isEditMode = true
             etItemName.setText(itemToEdit.item.itemName)
             etAmount.setText(itemToEdit.item.amount.toString())
             etNotes.setText(itemToEdit.item.notes)
 
-            // get item consumers & payer
             val itemConsumers = viewModel.getItemConsumers(itemToEdit.item.itemID).first()
             val areWeightsEqual = if (itemConsumers.size <= 1) true else {
                 val firstWeight = itemConsumers.first().weight
@@ -462,8 +419,7 @@ class SheetViewActivity : AppCompatActivity() {
             }
             switchEqualSplit.isChecked = areWeightsEqual
 
-            // Populate contributor rows and their states (sorted)
-            for (contrib in sortedContributors) {
+            sortedContributors.forEachIndexed { index, contrib ->
                 val rowView = LayoutInflater.from(this).inflate(R.layout.contributor_percentage_item, containerContributors, false)
                 val cb = rowView.findViewById<CheckBox>(R.id.checkbox_contributor)
                 cb.text = contrib.contributorName
@@ -471,24 +427,26 @@ class SheetViewActivity : AppCompatActivity() {
                 val consumer = itemConsumers.find { it.contributorID == contrib.contributorID }
                 cb.isChecked = consumer != null
 
+                // Populate custom values if unequal
                 if (consumer != null && !areWeightsEqual) {
                     val etPercentage = rowView.findViewById<EditText>(R.id.et_percentage)
                     etPercentage.setText(String.format(Locale.US, "%.2f", consumer.weight))
+
+                    val etRowAmount = rowView.findViewById<EditText>(R.id.et_amount)
+                    val amt = (itemToEdit.item.amount ?: 0.0) * (consumer.weight / 100.0)
+                    etRowAmount.setText(String.format(Locale.US, "%.2f", amt))
+
+                    // Mark as manually entered since we are loading existing data
+                    manualEntries[index] = true
                 }
 
                 containerContributors.addView(rowView)
                 contributorViews.add(rowView)
             }
 
-            // Set spinner selection to the payer (accounting for placeholder offset)
             val payerIndex = sortedContributors.indexOfFirst { it.contributorID == itemToEdit.payer.contributorID }
-            if (payerIndex >= 0) {
-                spinnerPayer.setSelection(payerIndex + 1) // +1 because index 0 is placeholder
-            } else {
-                spinnerPayer.setSelection(0)
-            }
+            if (payerIndex >= 0) spinnerPayer.setSelection(payerIndex + 1)
         } else {
-            // Populate contributor rows (sorted) for new item
             for (contrib in sortedContributors) {
                 val rowView = LayoutInflater.from(this).inflate(R.layout.contributor_percentage_item, containerContributors, false)
                 val cb = rowView.findViewById<CheckBox>(R.id.checkbox_contributor)
@@ -498,173 +456,291 @@ class SheetViewActivity : AppCompatActivity() {
                 containerContributors.addView(rowView)
                 contributorViews.add(rowView)
             }
-            // default spinner shows placeholder
-            spinnerPayer.setSelection(0)
         }
 
         fun setProgrammaticUpdate(updating: Boolean) {
             isUpdatingProgrammatically = updating
         }
 
-        fun redistributeAfterCheckboxChange() {
-            setProgrammaticUpdate(true)
-            val checkedViews = contributorViews.filter {
-                it.findViewById<CheckBox>(R.id.checkbox_contributor).isChecked
-            }
-
-            if (checkedViews.isNotEmpty()) {
-                val percentage = 100.0 / checkedViews.size
-                checkedViews.forEach {
-                    it.findViewById<EditText>(R.id.et_percentage).setText(String.format(Locale.US, "%.2f", percentage))
-                }
-            }
-
-            contributorViews.filterNot { checkedViews.contains(it) }.forEach {
-                it.findViewById<EditText>(R.id.et_percentage).setText("")
-            }
-            setProgrammaticUpdate(false)
-        }
-
-        fun updatePercentageVisibility() {
+        fun updateUIState() {
             setProgrammaticUpdate(true)
             val isSplitEqually = switchEqualSplit.isChecked
+            val totalAmount = etAmount.text.toString().toDoubleOrNull() ?: 0.0
+
+            val checkedViews = contributorViews.filter { it.findViewById<CheckBox>(R.id.checkbox_contributor).isChecked }
+            val count = checkedViews.size
+
             for (view in contributorViews) {
-                val etPercentage = view.findViewById<EditText>(R.id.et_percentage)
                 val cb = view.findViewById<CheckBox>(R.id.checkbox_contributor)
-                if (isSplitEqually || !cb.isChecked) {
+                val etPercentage = view.findViewById<EditText>(R.id.et_percentage)
+                val tvAmountDisplay = view.findViewById<TextView>(R.id.tv_amount)
+                val etRowAmount = view.findViewById<EditText>(R.id.et_amount)
+
+                if (!cb.isChecked) {
                     etPercentage.visibility = View.GONE
+                    tvAmountDisplay.visibility = View.GONE
+                    etRowAmount.visibility = View.GONE
                     etPercentage.setText("")
+                    tvAmountDisplay.text = ""
+                    etRowAmount.setText("")
                 } else {
-                    etPercentage.visibility = View.VISIBLE
+                    if (isSplitEqually) {
+                        // Equal Split: Show TV, Hide inputs
+                        etPercentage.visibility = View.GONE
+                        etRowAmount.visibility = View.GONE
+                        tvAmountDisplay.visibility = View.VISIBLE
+
+                        if (count > 0 && totalAmount > 0) {
+                            val share = totalAmount / count
+                            tvAmountDisplay.text = String.format(Locale.US, "%.2f", share)
+                        } else {
+                            tvAmountDisplay.text = "0.00"
+                        }
+                    } else {
+                        // Custom Split: Show Inputs, Hide TV
+                        etPercentage.visibility = View.VISIBLE
+                        etRowAmount.visibility = View.VISIBLE
+                        tvAmountDisplay.visibility = View.GONE
+                    }
                 }
             }
             tvPercentageWarning.visibility = View.GONE
             setProgrammaticUpdate(false)
         }
 
+        // Listener for Main Amount to update rows in real-time
+        etAmount.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                if(isUpdatingProgrammatically) return
+
+                // If equal split, just update UI (recalc shares)
+                if (switchEqualSplit.isChecked) {
+                    updateUIState()
+                } else {
+                    // If custom split, update row AMOUNTS based on existing percentages
+                    // We assume percentages are invariant when Total changes
+                    setProgrammaticUpdate(true)
+                    val newTotal = s.toString().toDoubleOrNull() ?: 0.0
+                    val checkedViews = contributorViews.filter { it.findViewById<CheckBox>(R.id.checkbox_contributor).isChecked }
+                    checkedViews.forEach { view ->
+                        val etPerc = view.findViewById<EditText>(R.id.et_percentage)
+                        val etRowAmt = view.findViewById<EditText>(R.id.et_amount)
+                        val perc = etPerc.text.toString().toDoubleOrNull() ?: 0.0
+                        if (perc > 0) {
+                            val newAmt = newTotal * (perc / 100.0)
+                            etRowAmt.setText(String.format(Locale.US, "%.2f", newAmt))
+                        }
+                    }
+                    setProgrammaticUpdate(false)
+                }
+            }
+        })
+
+        // MAIN LOGIC: Recalculate based on Source Change
+        fun distributeAmounts(sourceIndex: Int, currentAmount: Double) {
+            val totalAmount = etAmount.text.toString().toDoubleOrNull() ?: 0.0
+            if (totalAmount <= 0.001) return
+
+            // 1. Mark this row as Manually Entered
+            manualEntries[sourceIndex] = true
+
+            val checkedIndices = contributorViews.indices.filter {
+                contributorViews[it].findViewById<CheckBox>(R.id.checkbox_contributor).isChecked
+            }
+
+            // 2. Identify Locked vs Floating rows
+            // Locked = manually entered. Floating = untouched (candidate for auto-balance).
+            // NOTE: The current source row is effectively locked to its new value.
+            var lockedIndices = checkedIndices.filter { manualEntries[it] }
+            var floatingIndices = checkedIndices.filter { !manualEntries[it] }
+
+            // NEW LOGIC: If ALL are locked, unlock everyone else except current source (the new Anchor)
+            if (floatingIndices.isEmpty() && checkedIndices.size > 1) {
+                checkedIndices.forEach { idx ->
+                    if (idx != sourceIndex) {
+                        manualEntries[idx] = false
+                    }
+                }
+                // Refresh lists
+                lockedIndices = checkedIndices.filter { manualEntries[it] }
+                floatingIndices = checkedIndices.filter { !manualEntries[it] }
+            }
+
+            // 3. Calculate what is consumed by locked rows (EXCLUDING targets we might adjust)
+            // We sum up the Locked rows.
+            // Note: Since we just updated sourceIndex's text/amount in the caller,
+            // reading its EditText gives the new value.
+            var sumLocked = 0.0
+            lockedIndices.forEach { idx ->
+                val valStr = contributorViews[idx].findViewById<EditText>(R.id.et_amount).text.toString()
+                sumLocked += valStr.toDoubleOrNull() ?: 0.0
+            }
+
+            // 4. Calculate Remainder
+            var remaining = totalAmount - sumLocked
+
+            // 5. Logic Branch: Do we have floating rows?
+            if (floatingIndices.isNotEmpty()) {
+                // CASE A: Distribute Remainder to Floating Rows (Initial Fill)
+                // If remaining < 0 (Overflow), floating rows get 0, and we still have deficit.
+
+                var amountPerFloating = remaining / floatingIndices.size
+                if (amountPerFloating < 0) amountPerFloating = 0.0
+
+                floatingIndices.forEach { idx ->
+                    val v = contributorViews[idx]
+                    val etAmt = v.findViewById<EditText>(R.id.et_amount)
+                    val etPerc = v.findViewById<EditText>(R.id.et_percentage)
+
+                    etAmt.setText(String.format(Locale.US, "%.2f", amountPerFloating))
+                    val perc = (amountPerFloating / totalAmount) * 100.0
+                    etPerc.setText(String.format(Locale.US, "%.2f", perc))
+                }
+            }
+
+            // 6. Final Check: Overflow/Underflow Correction (Penny Logic & Over-Locked)
+            // We recalculate the Total Sum of ALL checked rows now.
+            var currentTotalSum = 0.0
+            checkedIndices.forEach { idx ->
+                val valStr = contributorViews[idx].findViewById<EditText>(R.id.et_amount).text.toString()
+                currentTotalSum += valStr.toDoubleOrNull() ?: 0.0
+            }
+
+            val diff = totalAmount - currentTotalSum
+
+            // If there's a difference (either penny rounding, or overflow because everything was locked)
+            if (Math.abs(diff) > 0.001) {
+                // We need to apply 'diff' to a target row.
+                // Priority: A floating row (if existed), else a neighbor.
+
+                val targetIndex = if (floatingIndices.isNotEmpty()) {
+                    floatingIndices.last() // Dump pennies on last floating
+                } else {
+                    // All are locked. We must adjust another locked row to maintain total.
+                    // Pick a neighbor that isn't the source.
+                    checkedIndices.firstOrNull { it != sourceIndex }
+                }
+
+                if (targetIndex != null) {
+                    val v = contributorViews[targetIndex]
+                    val etAmt = v.findViewById<EditText>(R.id.et_amount)
+                    val etPerc = v.findViewById<EditText>(R.id.et_percentage)
+
+                    val oldAmt = etAmt.text.toString().toDoubleOrNull() ?: 0.0
+                    var newAmt = oldAmt + diff
+                    if (newAmt < 0) newAmt = 0.0 // Clamp to 0
+
+                    etAmt.setText(String.format(Locale.US, "%.2f", newAmt))
+                    val newPerc = (newAmt / totalAmount) * 100.0
+                    etPerc.setText(String.format(Locale.US, "%.2f", newPerc))
+                }
+            }
+        }
+
         contributorViews.forEachIndexed { index, view ->
             val cb = view.findViewById<CheckBox>(R.id.checkbox_contributor)
             val etPercentage = view.findViewById<EditText>(R.id.et_percentage)
+            val etRowAmount = view.findViewById<EditText>(R.id.et_amount)
 
-            // When user taps/clicks the percentage box, select all text.
-            // We guard by isUpdatingProgrammatically so programmatic setText() won't trigger unwanted selection.
-            etPercentage.setOnFocusChangeListener { v, hasFocus ->
-                if (hasFocus && !isUpdatingProgrammatically) {
-                    try {
-                        etPercentage.selectAll()
-                    } catch (e: Exception) {
-                        // ignore selection errors silently
-                    }
-                }
+            cb.setOnCheckedChangeListener { _, isChecked ->
+                updateUIState()
             }
 
-            // Some devices / IMEs may not trigger focus when tapped; ensure click also selects.
-            etPercentage.setOnClickListener {
-                if (!isUpdatingProgrammatically) {
-                    try {
-                        etPercentage.selectAll()
-                    } catch (e: Exception) {
-                        // ignore
-                    }
-                }
-            }
-
-            // Optional: handle touch to ensure selection after user lifts finger (more reliable on some devices)
-            etPercentage.setOnTouchListener { v, event ->
-                if (event.action == MotionEvent.ACTION_UP && !isUpdatingProgrammatically) {
-                    try {
-                        etPercentage.selectAll()
-                    } catch (e: Exception) {
-                        // ignore
-                    }
-                }
-                // Return false so the EditText still handles the touch (shows keyboard / focuses)
-                false
-            }
-
-            cb.setOnCheckedChangeListener { _, _ ->
-                updatePercentageVisibility()
-                if (!switchEqualSplit.isChecked) {
-                    redistributeAfterCheckboxChange()
-                }
-            }
-
+            // --- PERCENTAGE TEXT WATCHER ---
             etPercentage.addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
                 override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
                 override fun afterTextChanged(s: Editable?) {
                     if (isUpdatingProgrammatically) return
+                    if (!etPercentage.hasFocus()) return
 
                     setProgrammaticUpdate(true)
+                    val totalAmount = etAmount.text.toString().toDoubleOrNull() ?: 0.0
 
-                    val checkedViews = contributorViews.filter { v ->
-                        v.findViewById<CheckBox>(R.id.checkbox_contributor).isChecked && v.findViewById<EditText>(R.id.et_percentage).visibility == View.VISIBLE
-                    }
-                    val currentEt = etPercentage
-                    val currentIndexInChecked = checkedViews.indexOfFirst { it.findViewById<EditText>(R.id.et_percentage) == currentEt }
+                    // Update Amount First (Source of Truth)
+                    val currentPerc = s.toString().toDoubleOrNull() ?: 0.0
+                    val rowAmt = totalAmount * (currentPerc / 100.0)
+                    etRowAmount.setText(String.format(Locale.US, "%.2f", rowAmt))
 
-                    if (currentIndexInChecked != -1) {
-                        val currentValue = s.toString().toDoubleOrNull() ?: 0.0
+                    // Run Logic based on Amount
+                    distributeAmounts(index, rowAmt)
 
-                        val fixedViews = checkedViews.take(currentIndexInChecked)
-                        val sumFixed = fixedViews.sumOf {
-                            it.findViewById<EditText>(R.id.et_percentage).text.toString().toDoubleOrNull() ?: 0.0
-                        }
-
-                        val remainingViewsToAdjust = checkedViews.drop(currentIndexInChecked + 1)
-
-                        if (remainingViewsToAdjust.isNotEmpty()) {
-                            var remainingPercentage = 100.0 - sumFixed - currentValue
-                            if (remainingPercentage < 0) remainingPercentage = 0.0
-                            val percentagePerView = remainingPercentage / remainingViewsToAdjust.size
-
-                            remainingViewsToAdjust.forEach { v ->
-                                v.findViewById<EditText>(R.id.et_percentage).setText(String.format(Locale.US, "%.2f", percentagePerView))
-                            }
-                        } else if (currentIndexInChecked > 0) { // Last box, adjust previous
-                            var remainingToDistribute = 100.0 - currentValue
-                            if(remainingToDistribute < 0) remainingToDistribute = 0.0
-
-                            val previousViews = fixedViews
-                            val sumOfPrevious = previousViews.sumOf {
-                                (it.findViewById<EditText>(R.id.et_percentage).text.toString().toDoubleOrNull() ?: 0.0)
-                            }
-
-                            if (sumOfPrevious > 0.01) {
-                                val factor = remainingToDistribute / sumOfPrevious
-                                previousViews.forEach { v ->
-                                    val et = v.findViewById<EditText>(R.id.et_percentage)
-                                    val oldValue = et.text.toString().toDoubleOrNull() ?: 0.0
-                                    et.setText(String.format(Locale.US, "%.2f", oldValue * factor))
-                                }
-                            } else if (previousViews.isNotEmpty()){ // if previous sum is 0, distribute equally
-                                val percentagePerView = remainingToDistribute / previousViews.size
-                                previousViews.forEach { v ->
-                                    v.findViewById<EditText>(R.id.et_percentage).setText(String.format(Locale.US, "%.2f", percentagePerView))
-                                }
-                            }
-                        }
-                    }
                     setProgrammaticUpdate(false)
                 }
             })
+
+            // --- AMOUNT TEXT WATCHER ---
+            etRowAmount.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: Editable?) {
+                    if (isUpdatingProgrammatically) return
+                    if (!etRowAmount.hasFocus()) return
+
+                    setProgrammaticUpdate(true)
+                    val totalAmount = etAmount.text.toString().toDoubleOrNull() ?: 0.0
+                    val currentAmt = s.toString().toDoubleOrNull() ?: 0.0
+
+                    // Update Percentage
+                    if (totalAmount > 0) {
+                        val currentPerc = (currentAmt / totalAmount) * 100.0
+                        etPercentage.setText(String.format(Locale.US, "%.2f", currentPerc))
+                    }
+
+                    // Run Logic
+                    distributeAmounts(index, currentAmt)
+
+                    setProgrammaticUpdate(false)
+                }
+            })
+
+            // Helper to ensure focus logic works for selection
+            etPercentage.setOnFocusChangeListener { _, hasFocus -> if (hasFocus && !isUpdatingProgrammatically) etPercentage.selectAll() }
+            etRowAmount.setOnFocusChangeListener { _, hasFocus -> if (hasFocus && !isUpdatingProgrammatically) etRowAmount.selectAll() }
+            etPercentage.setOnClickListener { if (!isUpdatingProgrammatically) etPercentage.selectAll() }
+            etRowAmount.setOnClickListener { if (!isUpdatingProgrammatically) etRowAmount.selectAll() }
         }
 
         switchEqualSplit.setOnCheckedChangeListener { _, isChecked ->
-            updatePercentageVisibility()
+            setProgrammaticUpdate(true)
             if (!isChecked) {
-                redistributeAfterCheckboxChange()
+                // TRYING TO TURN OFF
+                val totalStr = etAmount.text.toString()
+                val total = totalStr.toDoubleOrNull()
+
+                if (total == null || total <= 0) {
+                    Toast.makeText(this, "Please enter the total Amount before custom splitting.", Toast.LENGTH_SHORT).show()
+                    switchEqualSplit.isChecked = true
+                    setProgrammaticUpdate(false)
+                    return@setOnCheckedChangeListener
+                }
+
+                // RESET STATE for Custom Mode
+                contributorViews.forEachIndexed { idx, view ->
+                    view.findViewById<EditText>(R.id.et_percentage).setText("")
+                    view.findViewById<EditText>(R.id.et_amount).setText("")
+                    manualEntries[idx] = false // Reset all flags
+                }
             }
+            setProgrammaticUpdate(false)
+            updateUIState()
         }
 
-        updatePercentageVisibility()
-        if (!switchEqualSplit.isChecked && itemToEdit == null) {
-            redistributeAfterCheckboxChange()
+        // Initial State
+        updateUIState()
+        if (!switchEqualSplit.isChecked && !isEditMode) {
+            setProgrammaticUpdate(true)
+            contributorViews.forEach {
+                it.findViewById<EditText>(R.id.et_percentage).setText("")
+                it.findViewById<EditText>(R.id.et_amount).setText("")
+            }
+            manualEntries.fill(false)
+            setProgrammaticUpdate(false)
         }
 
-        btnCancel.setOnClickListener {
-            dialog.dismiss()
-        }
+        btnCancel.setOnClickListener { dialog.dismiss() }
 
         btnDone.setOnClickListener {
             val itemName = etItemName.text.toString().trim()
@@ -672,57 +748,32 @@ class SheetViewActivity : AppCompatActivity() {
             val amount = amountStr.toDoubleOrNull()
             val notes = etNotes.text.toString().trim()
 
-            if (itemName.isEmpty()) {
-                etItemName.error = "Item name cannot be empty."
-                return@setOnClickListener
-            }
-            if (amount == null || amount <= 0) {
-                etAmount.error = "Invalid amount."
-                return@setOnClickListener
-            }
+            if (itemName.isEmpty()) { etItemName.error = "Item name cannot be empty."; return@setOnClickListener }
+            if (amount == null || amount <= 0) { etAmount.error = "Invalid amount."; return@setOnClickListener }
+            if (spinnerPayer.selectedItemPosition <= 0) { Toast.makeText(this, "Select a valid payer.", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
 
-            // Validate spinner selection: placeholder (index 0) is NOT a valid payer
-            val selectedPos = spinnerPayer.selectedItemPosition
-            if (selectedPos <= 0) {
-                Toast.makeText(this, "A valid payer must be selected.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            val selectedPayerName = spinnerPayer.selectedItem as String
-            val payer = contributorsSnapshot.find { it.contributorName == selectedPayerName }
+            val payerName = spinnerPayer.selectedItem as String
+            val payer = contributorsSnapshot.find { it.contributorName == payerName } ?: return@setOnClickListener
 
-            if (payer == null) {
-                Toast.makeText(this, "A valid payer must be selected.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
+            val checkedViews = contributorViews.filter { it.findViewById<CheckBox>(R.id.checkbox_contributor).isChecked }
+            if (checkedViews.isEmpty()) { Toast.makeText(this, "Select at least one consumer.", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
 
-            val isSplitEqually = switchEqualSplit.isChecked
             val consumerWeights = mutableListOf<Pair<Int, Double>>()
-
-            val checkedViews = contributorViews.filter { view ->
-                view.findViewById<CheckBox>(R.id.checkbox_contributor).isChecked
-            }
-
-            if (checkedViews.isEmpty()) {
-                Toast.makeText(this, "At least one consumer must be selected.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            if (isSplitEqually) {
+            if (switchEqualSplit.isChecked) {
                 val percentage = 100.0 / checkedViews.size
-                for (view in checkedViews) {
-                    val contributorId = view.findViewById<CheckBox>(R.id.checkbox_contributor).tag as Int
-                    consumerWeights.add(Pair(contributorId, percentage))
+                checkedViews.forEach {
+                    val id = it.findViewById<CheckBox>(R.id.checkbox_contributor).tag as Int
+                    consumerWeights.add(Pair(id, percentage))
                 }
             } else {
-                for (view in checkedViews) {
-                    val contributorId = view.findViewById<CheckBox>(R.id.checkbox_contributor).tag as Int
-                    val etPercentage = view.findViewById<EditText>(R.id.et_percentage)
-                    val weight = etPercentage.text.toString().toDoubleOrNull() ?: 0.0
-                    consumerWeights.add(Pair(contributorId, weight))
+                checkedViews.forEach {
+                    val id = it.findViewById<CheckBox>(R.id.checkbox_contributor).tag as Int
+                    val weight = it.findViewById<EditText>(R.id.et_percentage).text.toString().toDoubleOrNull() ?: 0.0
+                    consumerWeights.add(Pair(id, weight))
                 }
-                val totalPercentage = consumerWeights.sumOf { it.second }
-                if (Math.abs(totalPercentage - 100.0) > 0.01) {
-                    tvPercentageWarning.text = "Total must be 100%, but is ${String.format(Locale.US, "%.2f", totalPercentage)}%"
+                val totalP = consumerWeights.sumOf { it.second }
+                if (Math.abs(totalP - 100.0) > 0.1) { // slightly looser tolerance for manual entry
+                    tvPercentageWarning.text = "Total percentage must be 100% (Current: ${String.format(Locale.US, "%.2f", totalP)}%)"
                     tvPercentageWarning.visibility = View.VISIBLE
                     return@setOnClickListener
                 }
@@ -734,10 +785,8 @@ class SheetViewActivity : AppCompatActivity() {
             } else {
                 viewModel.insertItem(itemName, amount, payer.contributorID, sheetId, Date(), consumers, consumerWeights, notes)
             }
-
             dialog.dismiss()
         }
-
         dialog.show()
     }
 }

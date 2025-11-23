@@ -35,6 +35,10 @@ interface BillSplitterDao {
     fun getSheetsWithContributors(): Flow<List<SheetWithContributors>>
 
     @Transaction
+    @Query("SELECT * FROM sheets ORDER BY dateModified DESC")
+    fun getSheetsWithContributorsAndItems(): Flow<List<SheetWithContributorsAndItems>>
+
+    @Transaction
     @Query("SELECT * FROM sheets WHERE sheetID = :sheetId")
     fun getSheetWithContributors(sheetId: Int): Flow<SheetWithContributors>
 

@@ -3,7 +3,6 @@
     android:id="@+id/tv_spinner_item"
     android:layout_width="match_parent"
     android:layout_height="48dp"
-    android:fontFamily="@font/josefin_sans_regular"
     android:gravity="center_vertical"
     android:paddingStart="12dp"
     android:paddingEnd="12dp"

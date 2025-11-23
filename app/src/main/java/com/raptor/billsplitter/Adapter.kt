@@ -10,18 +10,19 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.raptor.billsplitter.data.SheetWithContributors
+import com.raptor.billsplitter.data.SheetWithContributorsAndItems
 
 class CardAdapter(
     private val context: Context,
-    private val onMenuAction: (String, SheetWithContributors) -> Unit
-) : ListAdapter<SheetWithContributors, CardAdapter.CardViewHolder>(SheetDiffCallback()) {
+    private val onMenuAction: (String, SheetWithContributorsAndItems) -> Unit
+) : ListAdapter<SheetWithContributorsAndItems, CardAdapter.CardViewHolder>(SheetDiffCallback()) {
 
     class CardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tvHeading: TextView = itemView.findViewById(R.id.expenseName)
         val tvNames: TextView = itemView.findViewById(R.id.contributorList)
         val btnMenu: ImageView = itemView.findViewById(R.id.btnMenu)
         val cardView: View = itemView.findViewById(R.id.cardView)
+        val tvSheetAmount: TextView = itemView.findViewById(R.id.sheetAmount)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CardViewHolder {
@@ -37,6 +38,9 @@ class CardAdapter(
         val sortedNames = currentItem.contributors.map { it.contributorName }.sorted().joinToString(separator = "   ")
         holder.tvNames.text = sortedNames
 
+        val totalAmount = currentItem.items.sumOf { it.amount }
+        holder.tvSheetAmount.text = String.format("%.1f", totalAmount)
+
         holder.btnMenu.setOnClickListener { view ->
             showCustomPopup(view, currentItem)
         }
@@ -46,7 +50,7 @@ class CardAdapter(
         }
     }
 
-    private fun showCustomPopup(anchorView: View, item: SheetWithContributors) {
+    private fun showCustomPopup(anchorView: View, item: SheetWithContributorsAndItems) {
         val inflater = LayoutInflater.from(context)
         val popupView = inflater.inflate(R.layout.popup_layout, null)
 
@@ -81,12 +85,12 @@ class CardAdapter(
     }
 }
 
-class SheetDiffCallback : DiffUtil.ItemCallback<SheetWithContributors>() {
-    override fun areItemsTheSame(oldItem: SheetWithContributors, newItem: SheetWithContributors): Boolean {
+class SheetDiffCallback : DiffUtil.ItemCallback<SheetWithContributorsAndItems>() {
+    override fun areItemsTheSame(oldItem: SheetWithContributorsAndItems, newItem: SheetWithContributorsAndItems): Boolean {
         return oldItem.sheet.sheetID == newItem.sheet.sheetID
     }
 
-    override fun areContentsTheSame(oldItem: SheetWithContributors, newItem: SheetWithContributors): Boolean {
+    override fun areContentsTheSame(oldItem: SheetWithContributorsAndItems, newItem: SheetWithContributorsAndItems): Boolean {
         return oldItem == newItem
     }
 }

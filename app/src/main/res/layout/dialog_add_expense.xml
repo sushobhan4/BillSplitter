@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="20dp"
-    android:background="@android:color/white">
+    android:background="@color/sheet_card_background">
 
     <TextView
         android:id="@+id/tvDialogTitle"
@@ -12,9 +13,8 @@
         android:layout_height="wrap_content"
         android:text="Add Expense"
         android:textSize="18sp"
-        android:fontFamily="@font/josefin_sans_regular"
         android:textStyle="bold"
-        android:textColor="#111"
+        android:textColor="@color/text_primary"
         android:layout_marginBottom="12dp" />
 
     <EditText
@@ -22,13 +22,12 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:background="@drawable/bg_modern_input"
-        android:fontFamily="@font/josefin_sans_regular"
         android:hint="Item Name"
         android:inputType="textCapWords"
         android:paddingStart="12dp"
         android:paddingEnd="12dp"
-        android:textColor="#222"
-        android:textColorHint="#888"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_hint"
         android:textSize="16sp" />
 
     <Spinner
@@ -39,7 +38,7 @@
         android:background="@drawable/bg_modern_input"
         android:paddingStart="0dp"
         android:paddingEnd="0dp"
-        android:popupBackground="@android:color/white"
+        android:popupBackground="@color/sheet_card_background"
         android:spinnerMode="dropdown" />
 
     <EditText
@@ -48,13 +47,12 @@
         android:layout_height="48dp"
         android:layout_marginTop="12dp"
         android:hint="Amount"
-        android:fontFamily="@font/josefin_sans_regular"
         android:paddingStart="12dp"
         android:paddingEnd="12dp"
         android:background="@drawable/bg_modern_input"
         android:inputType="numberDecimal"
-        android:textColor="#222"
-        android:textColorHint="#888"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_hint"
         android:textSize="16sp" />
 
     <EditText
@@ -63,13 +61,12 @@
         android:layout_height="48dp"
         android:layout_marginTop="12dp"
         android:background="@drawable/bg_modern_input"
-        android:fontFamily="@font/josefin_sans_regular"
         android:hint="Notes (Optional)"
         android:inputType="textCapSentences"
         android:paddingStart="12dp"
         android:paddingEnd="12dp"
-        android:textColor="#222"
-        android:textColorHint="#888"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_hint"
         android:textSize="16sp" />
 
     <LinearLayout
@@ -84,9 +81,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:fontFamily="@font/josefin_sans_regular"
             android:text="Split between"
-            android:textColor="#222"
+            android:textColor="@color/text_secondary"
             android:textSize="15sp" />
 
         <com.google.android.material.switchmaterial.SwitchMaterial
@@ -94,25 +90,37 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
-            android:fontFamily="@font/josefin_sans_regular"
             android:text="Split equally"
-            android:textColor="#000000"
+            android:textColor="@color/text_primary"
             android:textSize="13sp" />
     </LinearLayout>
 
-    <ScrollView
+    <!-- WRAPPER START: ConstraintLayout added to enforce max height -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="150dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        android:fillViewport="true">
+        android:layout_marginBottom="8dp">
 
-        <LinearLayout
-            android:id="@+id/ll_contributor_checkboxes"
+        <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </ScrollView>
+            android:fillViewport="true"
+            app:layout_constrainedHeight="true"
+            app:layout_constraintHeight_max="150dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:id="@+id/ll_contributor_checkboxes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- WRAPPER END -->
 
     <TextView
         android:id="@+id/tv_percentage_warning"
@@ -120,7 +128,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="Total must be 100%"
-        android:fontFamily="@font/josefin_sans_regular"
         android:textColor="@android:color/holo_red_dark"
         android:visibility="gone" />
 
@@ -137,18 +144,16 @@
             android:layout_height="44dp"
             android:layout_marginEnd="8dp"
             android:text="Cancel"
-            android:fontFamily="@font/josefin_sans_regular"
-            android:backgroundTint="#E0E0E0"
-            android:textColor="#111" />
+            android:backgroundTint="@color/button_secondary_background"
+            android:textColor="@color/button_secondary_text" />
 
         <Button
             android:id="@+id/btn_done"
             android:layout_width="wrap_content"
             android:layout_height="44dp"
             android:text="Done"
-            android:fontFamily="@font/josefin_sans_regular"
-            android:backgroundTint="#222222"
-            android:textColor="#FFFFFF" />
+            android:backgroundTint="@color/button_primary_background"
+            android:textColor="@color/button_primary_text" />
     </LinearLayout>
 
 </LinearLayout>

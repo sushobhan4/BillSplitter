@@ -10,29 +10,30 @@
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
-    app:cardBackgroundColor="#D32F2F"
     app:cardCornerRadius="16dp"
     app:cardElevation="8dp"
-    app:rippleColor="@android:color/white">
+    app:rippleColor="@color/button_primary_text">
+    <!-- app:cardBackgroundColor is removed to allow the inner layout's background to show -->
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp"
+        android:background="@drawable/expense_card_gradient"
         android:clickable="false"
+        android:duplicateParentState="true"
         android:focusable="false"
-        android:duplicateParentState="true">
+        android:padding="10dp">
 
         <!-- HEADER -->
         <LinearLayout
             android:id="@+id/expense_header_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clickable="false"
+            android:duplicateParentState="true"
+            android:focusable="false"
             android:gravity="top"
             android:orientation="horizontal"
-            android:clickable="false"
-            android:focusable="false"
-            android:duplicateParentState="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -52,10 +53,9 @@
                     android:clickable="false"
                     android:duplicateParentState="true"
                     android:focusable="false"
-                    android:fontFamily="@font/josefin_sans_regular"
                     android:singleLine="true"
                     android:text="Chicken"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/button_primary_text"
                     android:textSize="34sp" />
             </HorizontalScrollView>
 
@@ -72,13 +72,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:fontFamily="@font/josefin_sans_regular"
-                android:text="399"
-                android:textColor="@android:color/white"
-                android:textSize="34sp"
                 android:clickable="false"
+                android:duplicateParentState="true"
                 android:focusable="false"
-                android:duplicateParentState="true" />
+                android:text="399"
+                android:textColor="@color/button_primary_text"
+                android:textSize="34sp" />
 
         </LinearLayout>
 
@@ -86,11 +85,11 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clickable="false"
+            android:duplicateParentState="true"
+            android:focusable="false"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:clickable="false"
-            android:focusable="false"
-            android:duplicateParentState="true"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -101,44 +100,42 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="32dp"
-                android:fontFamily="@font/josefin_sans_regular"
-                android:text="Sushobhan"
-                android:textColor="@android:color/white"
-                android:textSize="16sp"
                 android:clickable="false"
+                android:duplicateParentState="true"
                 android:focusable="false"
-                android:duplicateParentState="true" />
+                android:text="Sushobhan"
+                android:textColor="@color/button_primary_text"
+                android:textSize="16sp" />
 
             <HorizontalScrollView
-                android:scrollbars="none"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fillViewport="true"
                 android:clickable="false"
+                android:duplicateParentState="true"
+                android:fillViewport="true"
                 android:focusable="false"
-                android:duplicateParentState="true">
+                android:scrollbars="none">
 
                 <LinearLayout
                     android:id="@+id/names_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="end"
-                    android:orientation="horizontal"
                     android:clickable="false"
+                    android:duplicateParentState="true"
                     android:focusable="false"
-                    android:duplicateParentState="true">
+                    android:gravity="end"
+                    android:orientation="horizontal">
 
                     <TextView
                         android:id="@+id/contributorList"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:fontFamily="@font/josefin_sans_regular"
-                        android:text="Alice Garry Bob Charlie David"
-                        android:textColor="@android:color/white"
-                        android:textSize="16sp"
                         android:clickable="false"
+                        android:duplicateParentState="true"
                         android:focusable="false"
-                        android:duplicateParentState="true" />
+                        android:text="Alice Garry Bob Charlie David"
+                        android:textColor="@color/button_primary_text"
+                        android:textSize="16sp" />
                 </LinearLayout>
             </HorizontalScrollView>
         </LinearLayout>

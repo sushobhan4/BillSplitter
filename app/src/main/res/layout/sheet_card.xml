@@ -9,7 +9,6 @@
     android:layout_marginVertical="10dp"
     android:clickable="true"
     android:focusable="true"
-    app:cardBackgroundColor="#26C6DA"
     app:cardCornerRadius="16dp"
     app:cardElevation="8dp"
     app:rippleColor="@android:color/white">
@@ -17,40 +16,70 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/sheet_card_gradient"
         android:padding="15dp">
 
-        <!-- Heading (e.g., "Goa Trip") -->
-        <TextView
-            android:id="@+id/expenseName"
+        <!-- HEADER CONTAINER: Name + Spacer + Amount -->
+        <!-- Anchored to the start of the Menu Button -->
+        <LinearLayout
+            android:id="@+id/header_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/josefin_sans_regular"
-            android:text="Home"
-            android:textColor="@android:color/white"
-            android:textSize="48sp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             app:layout_constraintEnd_toStartOf="@+id/btnMenu"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <HorizontalScrollView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scrollbars="none">
+
+                <TextView
+                    android:id="@+id/expenseName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Home"
+                    android:textColor="@android:color/white"
+                    android:textSize="40sp"
+                    android:textStyle="bold"
+                    android:singleLine="true" />
+            </HorizontalScrollView>
+
+            <!-- Spacer to push Amount to the right -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/sheetAmount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="0.00"
+                android:textColor="@android:color/white"
+                android:textSize="32sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
 
         <!-- 3 Dots Menu Icon -->
-
-        <!-- Horizontal Scrollable List of Names -->
-
         <ImageView
             android:id="@+id/btnMenu"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:contentDescription="Options"
             android:padding="0dp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0"
-            app:srcCompat="@android:drawable/ic_menu_info_details"
+            app:srcCompat="@drawable/dots"
             app:tint="@android:color/white" />
 
+        <!-- Horizontal Scrollable List of Names -->
         <HorizontalScrollView
             android:id="@+id/scrollNames"
             android:layout_width="0dp"
@@ -60,9 +89,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/expenseName">
+            app:layout_constraintTop_toBottomOf="@+id/header_layout">
 
-            <!-- You can dynamically add TextViews here or append text to this single TextView -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -72,7 +100,6 @@
                     android:id="@+id/contributorList"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/josefin_sans_regular"
                     android:text="Alice Garry Bob Charlie David"
                     android:textColor="@android:color/white"
                     android:textSize="16sp" />

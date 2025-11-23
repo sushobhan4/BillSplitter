@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!--
+         A modern linear gradient from deep purple to vibrant blue.
+         angle="135" : Bottom-Right to Top-Left direction.
+    -->
+    <gradient
+        android:angle="135"
+        android:startColor="#FDC830"
+        android:endColor="#F37335"
+        android:type="linear" />
+
+    <!-- Match this radius to your CardView's app:cardCornerRadius (16dp) -->
+    <corners android:radius="16dp" />
+
+</shape>

@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.raptor.billsplitter.data.BillSplitterDao
 import com.raptor.billsplitter.data.Contributor
 import com.raptor.billsplitter.data.Sheet
-import com.raptor.billsplitter.data.SheetWithContributors
+import com.raptor.billsplitter.data.SheetWithContributorsAndItems
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -13,7 +13,7 @@ import java.util.Date
 
 class MainViewModel(private val dao: BillSplitterDao) : ViewModel() {
 
-    val sheets: Flow<List<SheetWithContributors>> = dao.getSheetsWithContributors()
+    val sheets: Flow<List<SheetWithContributorsAndItems>> = dao.getSheetsWithContributorsAndItems()
 
     fun addSheet(sheetName: String, notes: String?, contributorNames: List<String>) {
         viewModelScope.launch {

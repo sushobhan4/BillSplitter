@@ -4,46 +4,59 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="20dp"
-    app:cardBackgroundColor="#B0BEC5"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="8dp">
+    android:layout_margin="16dp"
+    app:cardBackgroundColor="@color/sheet_card_background"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="12dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:padding="24dp">
 
-        <!-- Close Button (X) -->
-
-        <ImageView
-            android:id="@+id/btnClose"
+        <!-- Header Title -->
+        <TextView
+            android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Create Sheet"
+            android:textColor="@color/text_primary"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Close Button -->
+        <ImageView
+            android:id="@+id/btnClose"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
-            android:padding="0sp"
+            android:padding="4dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            app:tint="@color/icon_tint"
+            app:layout_constraintBottom_toBottomOf="@id/tvTitle"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@android:drawable/ic_menu_close_clear_cancel"
-            app:tint="@android:color/black" />
+            app:layout_constraintTop_toTopOf="@id/tvTitle" />
 
         <!-- Name Input -->
         <EditText
             android:id="@+id/etSheetName"
             android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_white_input"
-            android:fontFamily="@font/josefin_sans_regular"
+            android:layout_height="56dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_modern_input"
             android:hint="Sheet Name"
-            android:padding="8dp"
-            android:textColor="#000000"
-            android:textSize="24sp"
-            app:layout_constraintEnd_toStartOf="@+id/btnClose"
+            android:inputType="textCapWords"
+            android:paddingHorizontal="16dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:inputType="textCapWords">
-        <requestFocus />
+            app:layout_constraintTop_toBottomOf="@+id/tvTitle">
+            <requestFocus />
         </EditText>
 
         <!-- Notes Input -->
@@ -51,88 +64,105 @@
             android:id="@+id/etSheetNotes"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_white_input"
-            android:fontFamily="@font/josefin_sans_regular"
-            android:hint="Notes"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_modern_input"
+            android:gravity="top|start"
+            android:hint="Description (Optional)"
             android:inputType="textMultiLine"
-            android:padding="8dp"
-            android:textColor="#000000"
-            android:textSize="18sp"
+            android:minLines="3"
+            android:padding="16dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
+            android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/etSheetName" />
 
-        <!-- Contributors Label -->
+        <!-- Contributors Section -->
         <TextView
             android:id="@+id/tvContributorsLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:fontFamily="@font/josefin_sans_regular"
+            android:layout_marginTop="24dp"
             android:text="Contributors"
-            android:textColor="@android:color/black"
-            android:textSize="18sp"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:letterSpacing="0.05"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/etSheetNotes" />
 
-        <!-- ScrollView for Dynamic List of Contributors -->
-        <ScrollView
-            android:id="@+id/scrollViewContributors"
-            android:layout_width="0dp"
+        <!-- ScrollView Container (Restrained Height) -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/scrollWrapper"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp"
-            android:fillViewport="true"
+            android:layout_marginBottom="24dp"
             app:layout_constrainedHeight="true"
-            app:layout_constraintHeight_max="300dp"
+            app:layout_constraintHeight_max="200dp"
             app:layout_constraintBottom_toTopOf="@+id/layoutButtons"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tvContributorsLabel">
 
-            <LinearLayout
-                android:id="@+id/containerContributors"
+            <ScrollView
+                android:id="@+id/scrollViewContributors"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
-        </ScrollView>
+                android:fillViewport="true"
+                android:scrollbars="vertical"
+                android:fadeScrollbars="false"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
 
-        <!-- Bottom Buttons Container -->
+                <LinearLayout
+                    android:id="@+id/containerContributors"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </ScrollView>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- Bottom Buttons -->
         <LinearLayout
             android:id="@+id/layoutButtons"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:gravity="center|clip_vertical"
             android:orientation="horizontal"
-            android:paddingTop="10dp"
+            android:weightSum="2"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
 
-            <Button
+            <!-- Add Contributor: Secondary/Grey Button -->
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnAddContributor"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4sp"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:backgroundTint="#00C8FF"
-                android:fontFamily="@font/josefin_sans_regular"
-                android:text="Add Contributor"
-                android:textColor="#000000"
-                android:textSize="16sp"
+                android:background="@drawable/bg_modern_input"
+                android:backgroundTint="@color/button_secondary_background"
+                android:text="+ Add Person"
+                android:textAllCaps="false"
+                android:textColor="@color/button_secondary_text"
+                android:textSize="15sp"
                 android:textStyle="bold" />
 
-            <Button
+            <!-- Create Sheet: Primary/Black Button -->
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnCreateSheet"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4sp"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="8dp"
                 android:layout_weight="1"
-                android:backgroundTint="#62DE01"
-                android:fontFamily="@font/josefin_sans_regular"
-                android:text="Create Sheet"
-                android:textColor="#000000"
+                android:background="@drawable/bg_modern_input"
+                android:backgroundTint="@color/button_primary_background"
+                android:text="Create"
+                android:textAllCaps="false"
+                android:textColor="@color/button_primary_text"
                 android:textSize="16sp"
                 android:textStyle="bold" />
         </LinearLayout>

@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
+    android:layout_width="120dp"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_popup_menu"
-    android:minWidth="30dp"
     android:orientation="vertical"
     android:paddingVertical="4dp">
 
@@ -12,48 +11,45 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/selectableItemBackground"
-        android:fontFamily="@font/josefin_sans_regular"
         android:gravity="center"
-        android:paddingHorizontal="16dp"
+        android:paddingHorizontal="8dp"
         android:paddingVertical="8dp"
         android:text="Edit"
-        android:textColor="@android:color/white"
-        android:textSize="16sp" />
+        android:textColor="@color/text_primary"
+        android:textSize="14sp" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#546E7A" />
+        android:background="@color/text_hint" />
 
     <TextView
         android:id="@+id/menuDelete"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/selectableItemBackground"
-        android:fontFamily="@font/josefin_sans_regular"
         android:gravity="center"
-        android:paddingHorizontal="16dp"
+        android:paddingHorizontal="8dp"
         android:paddingVertical="8dp"
         android:text="Delete"
-        android:textColor="@android:color/white"
-        android:textSize="16sp" />
+        android:textColor="@color/text_primary"
+        android:textSize="14sp" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#546E7A" />
+        android:background="@color/text_hint" />
 
     <TextView
         android:id="@+id/menuDetails"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/selectableItemBackground"
-        android:fontFamily="@font/josefin_sans_regular"
         android:gravity="center"
-        android:paddingHorizontal="16dp"
+        android:paddingHorizontal="8dp"
         android:paddingVertical="8dp"
         android:text="Details"
-        android:textColor="@android:color/white"
-        android:textSize="16sp" />
+        android:textColor="@color/text_primary"
+        android:textSize="14sp" />
 
 </LinearLayout>

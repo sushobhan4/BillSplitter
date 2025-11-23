@@ -14,7 +14,6 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:background="@drawable/bg_white_input"
-        android:fontFamily="@font/josefin_sans_regular"
         android:gravity="center_vertical"
         android:hint="Name"
         android:padding="10dp"

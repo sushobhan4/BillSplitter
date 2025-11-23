@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!--
+         A vibrant gradient from your original Teal (#26C6DA) to a deeper Ocean Blue.
+         angle="135" : Bottom-Right to Top-Left
+    -->
+    <gradient
+        android:angle="135"
+        android:startColor="#26C6DA"
+        android:endColor="#1976D2"
+        android:type="linear" />
+
+    <!-- Match this radius to your CardView's app:cardCornerRadius -->
+    <corners android:radius="16dp" />
+
+</shape>

@@ -27,7 +27,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.raptor.billsplitter.data.AppDatabase
 import com.raptor.billsplitter.data.Contributor
-import com.raptor.billsplitter.data.SheetWithContributors
+import com.raptor.billsplitter.data.SheetWithContributorsAndItems
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun applySortingAndSubmit(sheets: List<SheetWithContributors>) {
+    private fun applySortingAndSubmit(sheets: List<SheetWithContributorsAndItems>) {
         val sortBy = sharedPreferences.getInt("sortBy", R.id.rbDateModified)
         val sortOrder = sharedPreferences.getInt("sortOrder", R.id.rbDescending)
         val isAscending = sortOrder == R.id.rbAscending
@@ -145,12 +145,12 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun deleteCard(item: SheetWithContributors) {
+    private fun deleteCard(item: SheetWithContributorsAndItems) {
         viewModel.deleteSheet(item.sheet.sheetID)
         Toast.makeText(this, getString(R.string.deleted), Toast.LENGTH_SHORT).show()
     }
 
-    private fun showDetailsDialog(item: SheetWithContributors) {
+    private fun showDetailsDialog(item: SheetWithContributorsAndItems) {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_details)
         dialog.window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
@@ -176,7 +176,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun showAddSheetDialog(itemToEdit: SheetWithContributors?) {
+    private fun showAddSheetDialog(itemToEdit: SheetWithContributorsAndItems?) {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.add_sheet)
         dialog.window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())

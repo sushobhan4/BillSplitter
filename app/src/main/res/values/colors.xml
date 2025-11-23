@@ -2,4 +2,14 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="sheet_card_background">#FFFFFFFF</color>
+    <color name="text_primary">#111111</color>
+    <color name="text_secondary">#444444</color>
+    <color name="text_hint">#999999</color>
+    <color name="icon_tint">#888888</color>
+    <color name="button_primary_background">#111111</color>
+    <color name="button_primary_text">#FFFFFF</color>
+    <color name="button_secondary_background">#F0F0F0</color>
+    <color name="button_secondary_text">#333333</color>
 </resources>
