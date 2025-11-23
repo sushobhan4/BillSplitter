@@ -344,7 +344,7 @@ class SheetViewActivity : AppCompatActivity() {
 
         val rvBalances = dialog.findViewById<RecyclerView>(R.id.rvBalances)
         rvBalances.layoutManager = LinearLayoutManager(this)
-        rvBalances.adapter = BalancesAdapter(balances.toList())
+        rvBalances.adapter = BalanceAdapter(balances)
 
         dialog.show()
     }
@@ -739,27 +739,5 @@ class SheetViewActivity : AppCompatActivity() {
         }
 
         dialog.show()
-    }
-
-    private class BalancesAdapter(private val items: List<Pair<String, Double>>) :
-        RecyclerView.Adapter<BalancesAdapter.VH>() {
-
-        class VH(view: View) : RecyclerView.ViewHolder(view) {
-            val tvName: TextView = view.findViewById(R.id.tvContributorName)
-            val tvAmount: TextView = view.findViewById(R.id.tvBalance)
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val v = LayoutInflater.from(parent.context).inflate(R.layout.balance_item, parent, false)
-            return VH(v)
-        }
-
-        override fun onBindViewHolder(holder: VH, position: Int) {
-            val (name, amt) = items[position]
-            holder.tvName.text = name
-            holder.tvAmount.text = String.format(Locale.getDefault(), "%.2f", amt)
-        }
-
-        override fun getItemCount(): Int = items.size
     }
 }
