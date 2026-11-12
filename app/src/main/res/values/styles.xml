@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="BillSplitterDialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/dialog_morph_enter</item>
+        <item name="android:windowExitAnimation">@anim/dialog_morph_exit</item>
+    </style>
+
+    <style name="BillSplitterPopupAnimation">
+        <item name="android:windowEnterAnimation">@anim/popup_morph_enter</item>
+        <item name="android:windowExitAnimation">@anim/popup_morph_exit</item>
+    </style>
+
+    <style name="BillSplitterActivityAnimation" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/activity_morph_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/activity_morph_exit</item>
+        <item name="android:activityCloseEnterAnimation">@anim/activity_morph_enter</item>
+        <item name="android:activityCloseExitAnimation">@anim/activity_morph_exit</item>
+    </style>
+</resources>

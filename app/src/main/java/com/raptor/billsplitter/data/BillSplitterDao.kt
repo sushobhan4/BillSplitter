@@ -85,6 +85,25 @@ interface BillSplitterDao {
     @Query("SELECT * FROM sheets WHERE sheetID = :sheetId")
     fun getSheet(sheetId: Int): Flow<Sheet>
 
+    @Query("SELECT * FROM sheets WHERE sheetID = :sheetId LIMIT 1")
+    suspend fun getSheetSnapshot(sheetId: Int): Sheet?
+
+    @Query("SELECT * FROM contributors WHERE sheetID = :sheetId")
+    suspend fun getContributorsForSheetSnapshot(sheetId: Int): List<Contributor>
+
+    @Query("SELECT * FROM items WHERE sheetID = :sheetId")
+    suspend fun getItemsForSheetSnapshot(sheetId: Int): List<Item>
+
+    @Query(
+        """
+        SELECT item_consumers.*
+        FROM item_consumers
+        INNER JOIN items ON item_consumers.itemID = items.itemID
+        WHERE items.sheetID = :sheetId
+        """
+    )
+    suspend fun getItemConsumersForSheetSnapshot(sheetId: Int): List<ItemConsumer>
+
     @Query("UPDATE items SET itemName = :itemName, amount = :amount, payerID = :payerId, dateModified = :dateModified, notes = :notes WHERE itemID = :itemId")
     suspend fun updateItemDetails(itemId: Int, itemName: String, amount: Double, payerId: Int, dateModified: Date, notes: String?)
 

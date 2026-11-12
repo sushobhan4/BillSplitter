@@ -31,5 +31,13 @@ data class Item(
     val payerID: Int,
     val dateCreated: Date,
     val dateModified: Date,
-    val notes: String?
-)
+    val notes: String?,
+    val itemType: Int = TYPE_EXPENSE
+) {
+    companion object {
+        const val TYPE_EXPENSE = 0
+        const val TYPE_SETTLEMENT = 1
+        const val TYPE_MONEY_TRANSFER = 2
+        const val TYPE_CARRYOVER = 3
+    }
+}

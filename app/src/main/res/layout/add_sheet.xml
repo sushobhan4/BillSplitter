@@ -1,121 +1,122 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="16dp"
-    app:cardBackgroundColor="@color/sheet_card_background"
-    app:cardCornerRadius="24dp"
-    app:cardElevation="12dp">
+    android:padding="16dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="24dp">
+        app:cardBackgroundColor="@color/surface_card"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/card_stroke"
+        app:strokeWidth="1dp">
 
-        <!-- Header Title -->
-        <TextView
-            android:id="@+id/tvTitle"
-            android:layout_width="wrap_content"
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fillViewport="true"
+        android:nestedScrollingEnabled="true"
+        android:overScrollMode="ifContentScrolls">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="22dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Create Sheet"
-            android:textColor="@color/text_primary"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <!-- Close Button -->
-        <ImageView
-            android:id="@+id/btnClose"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:padding="4dp"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            app:tint="@color/icon_tint"
-            app:layout_constraintBottom_toBottomOf="@id/tvTitle"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/tvTitle" />
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif-medium"
+                android:text="Create Sheet"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-        <!-- Name Input -->
+            <ImageView
+                android:id="@+id/btnClose"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="Close"
+                android:padding="6dp"
+                android:src="@drawable/ic_lucide_x"
+                app:tint="@color/text_hint" />
+        </LinearLayout>
+
         <EditText
             android:id="@+id/etSheetName"
-            android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_marginTop="24dp"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="20dp"
             android:background="@drawable/bg_modern_input"
             android:hint="Sheet Name"
             android:inputType="textCapWords"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="14dp"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_hint"
-            android:textSize="18sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvTitle">
+            android:textSize="16sp">
+
             <requestFocus />
         </EditText>
 
-        <!-- Notes Input -->
         <EditText
             android:id="@+id/etSheetNotes"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:background="@drawable/bg_modern_input"
             android:gravity="top|start"
             android:hint="Description (Optional)"
             android:inputType="textMultiLine"
-            android:minLines="3"
-            android:padding="16dp"
+            android:minLines="2"
+            android:padding="14dp"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_hint"
-            android:textSize="16sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/etSheetName" />
+            android:textSize="14sp" />
 
-        <!-- Contributors Section -->
         <TextView
             android:id="@+id/tvContributorsLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Contributors"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textAllCaps="true"
-            android:letterSpacing="0.05"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/etSheetNotes" />
+            android:layout_marginTop="20dp"
+            android:letterSpacing="0.12"
+            android:text="CONTRIBUTORS"
+            android:textColor="@color/text_hint"
+            android:textSize="11sp"
+            android:textStyle="bold" />
 
-        <!-- ScrollView Container (Restrained Height) -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/scrollWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="24dp"
-            app:layout_constrainedHeight="true"
-            app:layout_constraintHeight_max="200dp"
-            app:layout_constraintBottom_toTopOf="@+id/layoutButtons"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvContributorsLabel">
+            android:layout_marginBottom="20dp">
 
             <ScrollView
                 android:id="@+id/scrollViewContributors"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fillViewport="true"
-                android:scrollbars="vertical"
                 android:fadeScrollbars="false"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent">
+                android:fillViewport="true"
+                android:nestedScrollingEnabled="true"
+                android:scrollbars="vertical"
+                app:layout_constrainedHeight="true"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintHeight_max="200dp"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <LinearLayout
                     android:id="@+id/containerContributors"
@@ -125,47 +126,47 @@
             </ScrollView>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Bottom Buttons -->
         <LinearLayout
             android:id="@+id/layoutButtons"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:weightSum="2"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
+            android:weightSum="2">
 
-            <!-- Add Contributor: Secondary/Grey Button -->
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnAddContributor"
                 android:layout_width="0dp"
-                android:layout_height="50dp"
-                android:layout_marginEnd="8dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="6dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_modern_input"
-                android:backgroundTint="@color/button_secondary_background"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:stateListAnimator="@null"
                 android:text="+ Add Person"
                 android:textAllCaps="false"
-                android:textColor="@color/button_secondary_text"
-                android:textSize="15sp"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <!-- Create Sheet: Primary/Black Button -->
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnCreateSheet"
                 android:layout_width="0dp"
-                android:layout_height="50dp"
-                android:layout_marginStart="8dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
-                android:background="@drawable/bg_modern_input"
-                android:backgroundTint="@color/button_primary_background"
+                android:background="@drawable/bg_primary_button"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:stateListAnimator="@null"
                 android:text="Create"
                 android:textAllCaps="false"
                 android:textColor="@color/button_primary_text"
-                android:textSize="16sp"
+                android:textSize="14sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
-</com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+    </ScrollView>
+    </com.google.android.material.card.MaterialCardView>
+</FrameLayout>

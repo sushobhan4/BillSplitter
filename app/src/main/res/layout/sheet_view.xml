@@ -1,123 +1,265 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/sheetRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground"
+    android:background="@drawable/bg_app_gradient"
     android:fitsSystemWindows="true"
     tools:context=".SheetViewActivity">
 
-    <HorizontalScrollView
-        android:id="@+id/sv_sheet_name"
+    <LinearLayout
+        android:id="@+id/sheetTopBar"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:scrollbars="none"
-        app:layout_constraintEnd_toStartOf="@+id/btn_sort_expenses"
+        android:layout_height="60dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/tv_sheet_name"
-            android:layout_width="wrap_content"
+        <ImageButton
+            android:id="@+id/btn_back_sheet"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Back"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_lucide_arrow_left"
+            app:tint="@color/icon_tint" />
+
+        <HorizontalScrollView
+            android:id="@+id/sv_sheet_name"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-black"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:scrollbars="none">
+
+            <TextView
+                android:id="@+id/tv_sheet_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:singleLine="true"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:text="Trip to Iceland" />
+        </HorizontalScrollView>
+
+        <ImageButton
+            android:id="@+id/btn_sort_expenses"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Sort expenses"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_lucide_arrow_up_down"
+            app:tint="@color/icon_tint" />
+    </LinearLayout>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/summaryCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="8dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/sheetTopBar">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_hero_gradient"
+            android:padding="22dp">
+
+            <TextView
+                android:id="@+id/tvTotalSpentLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.12"
+                android:text="TOTAL SPENT"
+                android:textColor="#99FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvReadOnlyBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_nested_panel"
+                android:letterSpacing="0.1"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="READ ONLY"
+                android:textColor="@color/carryover_accent"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tv_total_spent"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="-0.02"
+                android:textColor="@color/hero_content"
+                android:textSize="36sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvTotalSpentLabel"
+                tools:text="₹2,450.00" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <LinearLayout
+        android:id="@+id/searchExpensesContainer"
+        android:layout_width="0dp"
+        android:layout_height="46dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/bg_surface_card"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="14dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/summaryCard">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:contentDescription="Search"
+            android:src="@drawable/ic_lucide_search"
+            app:tint="@color/text_hint" />
+
+        <EditText
+            android:id="@+id/etSearchExpenses"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:hint="Search expenses, payer, or people..."
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:maxLines="1"
             android:singleLine="true"
             android:textColor="@color/text_primary"
-            android:textSize="34sp"
-            android:letterSpacing="-0.02"
-            tools:text="Trip to Japan" />
-    </HorizontalScrollView>
+            android:textColorHint="@color/text_hint"
+            android:textSize="14sp" />
 
-    <ImageButton
-        android:id="@+id/btn_sort_expenses"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginEnd="16dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:padding="12dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/sort_button_image"
-        app:tint="@color/text_primary"
-        app:layout_constraintBottom_toBottomOf="@+id/sv_sheet_name"
+        <ImageButton
+            android:id="@+id/btnClearExpenseSearch"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Clear search"
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_lucide_x"
+            android:visibility="gone"
+            app:tint="@color/text_hint" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tv_recent_expenses_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="16dp"
+        android:letterSpacing="0.12"
+        android:text="EXPENSES"
+        android:textColor="@color/text_hint"
+        android:textSize="11sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/sv_sheet_name" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/searchExpensesContainer" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_expenses"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="6dp"
         android:clipToPadding="false"
-        android:paddingBottom="100dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="96dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/sv_sheet_name" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_recent_expenses_label" />
 
     <TextView
         android:id="@+id/tv_empty_expenses"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="32dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginHorizontal="20dp"
+        android:background="@drawable/bg_surface_card"
         android:gravity="center"
+        android:padding="24dp"
         android:text="Long press expense card to see more options"
         android:textColor="@color/text_secondary"
-        android:textSize="16sp"
+        android:textSize="14sp"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btn_add_item"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_recent_expenses_label"
         tools:visibility="visible" />
 
-    <LinearLayout
-        android:id="@+id/ll_buttons"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="24dp"
-        android:orientation="horizontal"
-        android:padding="4dp"
-        android:weightSum="2"
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btn_calculate"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="6dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/bg_surface_card"
+        android:stateListAnimator="@null"
+        android:text="Calculate"
+        android:textAllCaps="false"
+        android:textColor="@color/text_primary"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btn_add_item"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_goneMarginEnd="20dp" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btn_add_item"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="6dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/bg_primary_button"
+        android:stateListAnimator="@null"
+        android:text="+ Add Expense"
+        android:textAllCaps="false"
+        android:textColor="@color/button_primary_text"
+        android:textSize="15sp"
+        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btn_calculate"
-            android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_marginEnd="6dp"
-            android:layout_weight="1"
-            android:background="@drawable/bg_modern_input"
-            android:backgroundTint="@color/button_secondary_background"
-            android:text="Calculate"
-            android:textAllCaps="false"
-            android:textColor="@color/button_secondary_text"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btn_add_item"
-            android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_marginStart="6dp"
-            android:layout_weight="1"
-            android:background="@drawable/bg_modern_input"
-            android:backgroundTint="@color/button_primary_background"
-            android:text="+ Add"
-            android:textAllCaps="false"
-            android:textColor="@color/button_primary_text"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-    </LinearLayout>
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@+id/btn_calculate"
+        app:layout_goneMarginStart="20dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -6,138 +6,161 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="20dp"
-    android:layout_marginVertical="10dp"
+    android:layout_marginVertical="6dp"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/surface_card"
     app:cardCornerRadius="16dp"
-    app:cardElevation="8dp"
-    app:rippleColor="@color/button_primary_text">
-    <!-- app:cardBackgroundColor is removed to allow the inner layout's background to show -->
+    app:cardElevation="0dp"
+    app:rippleColor="@color/surface_card_high"
+    app:strokeColor="@color/card_stroke"
+    app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/expense_card_gradient"
         android:clickable="false"
         android:duplicateParentState="true"
         android:focusable="false"
-        android:padding="10dp">
+        android:padding="16dp">
 
-        <!-- HEADER -->
-        <LinearLayout
-            android:id="@+id/expense_header_layout"
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/expenseIcon"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="@drawable/bg_icon_bubble"
+            android:gravity="center"
+            android:text="₹"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/expenseName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="12dp"
+            android:clickable="false"
+            android:duplicateParentState="true"
+            android:ellipsize="end"
+            android:focusable="false"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="2"
+            android:textColor="@color/text_primary"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/expenseAmount"
+            app:layout_constraintStart_toEndOf="@+id/expenseIcon"
+            app:layout_constraintTop_toTopOf="@+id/expenseIcon"
+            tools:text="Dinner at Blue Lagoon" />
+
+        <TextView
+            android:id="@+id/expenseDate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="2dp"
+            android:clickable="false"
+            android:duplicateParentState="true"
+            android:focusable="false"
+            android:textColor="@color/text_hint"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="@+id/expenseName"
+            app:layout_constraintStart_toEndOf="@+id/expenseIcon"
+            app:layout_constraintTop_toBottomOf="@+id/expenseName"
+            tools:text="October 15, 2023" />
+
+        <TextView
+            android:id="@+id/expenseAmount"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:clickable="false"
             android:duplicateParentState="true"
             android:focusable="false"
-            android:gravity="top"
-            android:orientation="horizontal"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="@color/text_primary"
+            android:textSize="17sp"
+            android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toTopOf="@+id/expenseName"
+            tools:text="₹399.00" />
 
-            <HorizontalScrollView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:clickable="false"
-                android:duplicateParentState="true"
-                android:focusable="false"
-                android:scrollbars="none">
-
-                <TextView
-                    android:id="@+id/expenseName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:clickable="false"
-                    android:duplicateParentState="true"
-                    android:focusable="false"
-                    android:singleLine="true"
-                    android:text="Chicken"
-                    android:textColor="@color/button_primary_text"
-                    android:textSize="34sp" />
-            </HorizontalScrollView>
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:clickable="false"
-                android:duplicateParentState="true"
-                android:focusable="false" />
-
-            <TextView
-                android:id="@+id/expenseAmount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:clickable="false"
-                android:duplicateParentState="true"
-                android:focusable="false"
-                android:text="399"
-                android:textColor="@color/button_primary_text"
-                android:textSize="34sp" />
-
-        </LinearLayout>
-
-        <!-- PAYER + CONSUMERS -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:id="@+id/expenseMetaPanel"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_nested_panel"
             android:clickable="false"
             android:duplicateParentState="true"
             android:focusable="false"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:orientation="vertical"
+            android:padding="12dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/expense_header_layout">
+            app:layout_constraintTop_toBottomOf="@+id/expenseDate">
 
-            <TextView
-                android:id="@+id/payerName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="32dp"
-                android:clickable="false"
-                android:duplicateParentState="true"
-                android:focusable="false"
-                android:text="Sushobhan"
-                android:textColor="@color/button_primary_text"
-                android:textSize="16sp" />
-
-            <HorizontalScrollView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:clickable="false"
-                android:duplicateParentState="true"
-                android:fillViewport="true"
-                android:focusable="false"
-                android:scrollbars="none">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-                <LinearLayout
-                    android:id="@+id/names_container"
-                    android:layout_width="match_parent"
+                <TextView
+                    android:id="@+id/paidByLabel"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:clickable="false"
-                    android:duplicateParentState="true"
-                    android:focusable="false"
-                    android:gravity="end"
-                    android:orientation="horizontal">
+                    android:layout_weight="1"
+                    android:text="Paid by"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
 
-                    <TextView
-                        android:id="@+id/contributorList"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:clickable="false"
-                        android:duplicateParentState="true"
-                        android:focusable="false"
-                        android:text="Alice Garry Bob Charlie David"
-                        android:textColor="@color/button_primary_text"
-                        android:textSize="16sp" />
-                </LinearLayout>
-            </HorizontalScrollView>
+                <TextView
+                    android:id="@+id/payerName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxWidth="180dp"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    tools:text="Alex Morgan" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/splitBetweenLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Split between"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/contributorList"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:gravity="end"
+                    android:maxWidth="180dp"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    tools:text="Everyone (4)" />
+            </LinearLayout>
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 

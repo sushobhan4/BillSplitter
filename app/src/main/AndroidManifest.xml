@@ -12,13 +12,38 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BillSplitter"
         tools:targetApi="31">
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.bsplit" />
+                <data android:pathPattern=".*\\..*\\.bsplit" />
+                <data android:pathPattern=".*\\..*\\..*\\.bsplit" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bsplit" />
             </intent-filter>
         </activity>
         <activity android:name=".SheetViewActivity" />

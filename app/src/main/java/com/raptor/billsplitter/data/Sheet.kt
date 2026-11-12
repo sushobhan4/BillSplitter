@@ -11,5 +11,6 @@ data class Sheet(
     val sheetName: String,
     val dateCreated: Date,
     var dateModified: Date,
-    val notes: String?
+    val notes: String?,
+    val isReadOnly: Boolean = false
 )

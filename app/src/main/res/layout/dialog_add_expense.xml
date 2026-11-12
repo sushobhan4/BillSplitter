@@ -1,159 +1,242 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="20dp"
-    android:background="@color/sheet_card_background">
+    android:padding="16dp">
 
-    <TextView
-        android:id="@+id/tvDialogTitle"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Add Expense"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@color/text_primary"
-        android:layout_marginBottom="12dp" />
+        app:cardBackgroundColor="@color/surface_card"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/card_stroke"
+        app:strokeWidth="1dp">
 
-    <EditText
-        android:id="@+id/et_item_name"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="@drawable/bg_modern_input"
-        android:hint="Item Name"
-        android:inputType="textCapWords"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:textColor="@color/text_primary"
-        android:textColorHint="@color/text_hint"
-        android:textSize="16sp" />
-
-    <Spinner
-        android:id="@+id/spinner_payer"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_modern_input"
-        android:paddingStart="0dp"
-        android:paddingEnd="0dp"
-        android:popupBackground="@color/sheet_card_background"
-        android:spinnerMode="dropdown" />
-
-    <EditText
-        android:id="@+id/et_amount"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="12dp"
-        android:hint="Amount"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:background="@drawable/bg_modern_input"
-        android:inputType="numberDecimal"
-        android:textColor="@color/text_primary"
-        android:textColorHint="@color/text_hint"
-        android:textSize="16sp" />
-
-    <EditText
-        android:id="@+id/et_notes"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_modern_input"
-        android:hint="Notes (Optional)"
-        android:inputType="textCapSentences"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:textColor="@color/text_primary"
-        android:textColorHint="@color/text_hint"
-        android:textSize="16sp" />
+        android:layout_height="wrap_content"
+        android:fillViewport="true"
+        android:nestedScrollingEnabled="true"
+        android:overScrollMode="ifContentScrolls">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="22dp">
 
         <TextView
-            android:id="@+id/tv_split_between"
-            android:layout_width="0dp"
+            android:id="@+id/tvDialogTitle"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Split between"
-            android:textColor="@color/text_secondary"
+            android:layout_gravity="center_horizontal"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:text="Add Expense"
+            android:textColor="@color/text_primary"
+            android:textSize="19sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvAmountLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:letterSpacing="0.12"
+            android:text="AMOUNT"
+            android:textColor="@color/text_hint"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/et_amount"
+            android:layout_width="match_parent"
+            android:layout_height="68dp"
+            android:background="@android:color/transparent"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:hint="0.00"
+            android:inputType="numberDecimal"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
+            android:textSize="40sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/et_item_name"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_modern_input"
+            android:hint="Expense description"
+            android:inputType="textCapWords"
+            android:paddingHorizontal="14dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
             android:textSize="15sp" />
 
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switch_equal_split"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:text="Split equally"
+        <Spinner
+            android:id="@+id/spinner_payer"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_spinner_field"
+            android:dropDownVerticalOffset="6dp"
+            android:dropDownWidth="match_parent"
+            android:overlapAnchor="false"
+            android:popupBackground="@drawable/bg_spinner_popup"
+            android:spinnerMode="dropdown" />
+
+        <EditText
+            android:id="@+id/et_notes"
+            android:layout_width="match_parent"
+            android:layout_height="68dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_modern_input"
+            android:gravity="top|start"
+            android:hint="Add a note (optional)..."
+            android:inputType="textCapSentences|textMultiLine"
+            android:padding="14dp"
             android:textColor="@color/text_primary"
-            android:textSize="13sp" />
-    </LinearLayout>
+            android:textColorHint="@color/text_hint"
+            android:textSize="14sp" />
 
-    <!-- WRAPPER START: ConstraintLayout added to enforce max height -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp">
-
-        <ScrollView
+        <LinearLayout
+            android:id="@+id/splitHeaderRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fillViewport="true"
-            app:layout_constrainedHeight="true"
-            app:layout_constraintHeight_max="150dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            android:layout_marginTop="18dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <LinearLayout
-                android:id="@+id/ll_contributor_checkboxes"
+            <TextView
+                android:id="@+id/tv_split_between"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="12dp"
+                android:layout_weight="1"
+                android:letterSpacing="0.08"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="SPLIT BETWEEN"
+                android:textColor="@color/text_hint"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btn_select_all_contributors"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:layout_marginEnd="10dp"
+                android:background="@drawable/bg_amount_chip"
+                android:maxLines="1"
+                android:minWidth="0dp"
+                android:paddingHorizontal="10dp"
+                android:singleLine="true"
+                android:stateListAnimator="@null"
+                android:text="Select all"
+                android:textAllCaps="false"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tv_equal_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="Equal"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_equal_split"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true" />
+        </LinearLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/contributorsScrollWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+
+            <ScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
-        </ScrollView>
-    </androidx.constraintlayout.widget.ConstraintLayout>
-    <!-- WRAPPER END -->
+                android:fadeScrollbars="false"
+                android:fillViewport="true"
+                android:nestedScrollingEnabled="true"
+                android:scrollbars="vertical"
+                app:layout_constrainedHeight="true"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHeight_max="200dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
-    <TextView
-        android:id="@+id/tv_percentage_warning"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Total must be 100%"
-        android:textColor="@android:color/holo_red_dark"
-        android:visibility="gone" />
+                <LinearLayout
+                    android:id="@+id/ll_contributor_checkboxes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </ScrollView>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="end"
-        android:layout_marginTop="16dp">
+        <TextView
+            android:id="@+id/tv_percentage_warning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Total must be 100%"
+            android:textColor="@color/give_text"
+            android:textSize="12sp"
+            android:visibility="gone" />
 
-        <Button
-            android:id="@+id/btn_cancel"
-            android:layout_width="wrap_content"
-            android:layout_height="44dp"
-            android:layout_marginEnd="8dp"
-            android:text="Cancel"
-            android:backgroundTint="@color/button_secondary_background"
-            android:textColor="@color/button_secondary_text" />
+        <LinearLayout
+            android:id="@+id/expenseActionButtons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal"
+            android:weightSum="2">
 
-        <Button
-            android:id="@+id/btn_done"
-            android:layout_width="wrap_content"
-            android:layout_height="44dp"
-            android:text="Done"
-            android:backgroundTint="@color/button_primary_background"
-            android:textColor="@color/button_primary_text" />
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btn_cancel"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_modern_input"
+                android:stateListAnimator="@null"
+                android:text="Cancel"
+                android:textAllCaps="false"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btn_done"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_primary_button"
+                android:stateListAnimator="@null"
+                android:text="Save"
+                android:textAllCaps="false"
+                android:textColor="@color/button_primary_text"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
     </LinearLayout>
-
-</LinearLayout>
+    </ScrollView>
+    </com.google.android.material.card.MaterialCardView>
+</FrameLayout>

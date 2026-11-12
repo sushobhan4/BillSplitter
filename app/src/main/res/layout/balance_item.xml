@@ -2,22 +2,53 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginVertical="5dp"
+    android:background="@drawable/bg_nested_panel"
+    android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:padding="8dp">
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="14dp">
 
-    <TextView
-        android:id="@+id/tvContributorName"
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
         android:layout_weight="1"
-        android:textColor="@color/text_primary"
-        android:textSize="18sp" />
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tvBalance"
+        <TextView
+            android:id="@+id/tvContributorName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvBalance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnMarkAsPaid"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/text_primary"
-        android:textSize="18sp" />
+        android:layout_height="36dp"
+        android:background="@drawable/bg_mark_paid_button"
+        android:maxLines="1"
+        android:minWidth="0dp"
+        android:paddingHorizontal="12dp"
+        android:singleLine="true"
+        android:stateListAnimator="@null"
+        android:text="Mark as Paid"
+        android:textAllCaps="false"
+        android:textColor="@color/settlement_accent"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
 </LinearLayout>

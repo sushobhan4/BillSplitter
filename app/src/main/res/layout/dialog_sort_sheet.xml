@@ -1,81 +1,137 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_height="wrap_content">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Sort by"
-        android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <RadioGroup
-        android:id="@+id/rgSortBy"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
+        android:background="@drawable/bg_white_card"
+        android:orientation="vertical">
 
-        <RadioButton
-            android:id="@+id/rbName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Name" />
-
-        <RadioButton
-            android:id="@+id/rbAmount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Amount" />
-
-        <RadioButton
-            android:id="@+id/rbDateCreated"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Date Created" />
-
-        <RadioButton
-            android:id="@+id/rbDateModified"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Date Modified" />
-    </RadioGroup>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Order"
-        android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <RadioGroup
-        android:id="@+id/rgSortOrder"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
+        android:fillViewport="true"
+        android:overScrollMode="ifContentScrolls">
 
-        <RadioButton
-            android:id="@+id/rbAscending"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Ascending" />
-
-        <RadioButton
-            android:id="@+id/rbDescending"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Descending" />
-    </RadioGroup>
-
-    <Button
-        android:id="@+id/btnApplySort"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="end"
-        android:layout_marginTop="16dp"
-        android:text="Apply" />
+        android:padding="22dp">
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/tvSortByLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:letterSpacing="0.12"
+            android:text="SORT BY"
+            android:textColor="@color/text_hint"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <RadioGroup
+            android:id="@+id/rgSortBy"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvSortByLabel">
+
+            <RadioButton
+                android:id="@+id/rbName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Name"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/rbAmount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Amount"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/rbDateCreated"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Date Created"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/rbDateModified"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Date Modified"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/tvOrderLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:letterSpacing="0.12"
+            android:text="ORDER"
+            android:textColor="@color/text_hint"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/rgSortBy" />
+
+        <RadioGroup
+            android:id="@+id/rgSortOrder"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvOrderLabel">
+
+            <RadioButton
+                android:id="@+id/rbAscending"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ascending"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/rbDescending"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Descending"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+        </RadioGroup>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnApplySort"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_primary_button"
+            android:stateListAnimator="@null"
+            android:text="Apply"
+            android:textAllCaps="false"
+            android:textColor="@color/button_primary_text"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/rgSortOrder" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+    </LinearLayout>
+</FrameLayout>

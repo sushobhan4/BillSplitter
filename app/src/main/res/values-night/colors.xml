@@ -1,15 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FFFFFFFF</color>
-    <color name="white">#FF000000</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
 
-    <color name="sheet_card_background">#FF1A1A1A</color>
-    <color name="text_primary">#F0F0F0</color>
-    <color name="text_secondary">#CCCCCC</color>
-    <color name="text_hint">#999999</color>
-    <color name="icon_tint">#AAAAAA</color>
-    <color name="button_primary_background">#444444</color>
-    <color name="button_primary_text">#FFFFFF</color>
-    <color name="button_secondary_background">#333333</color>
-    <color name="button_secondary_text">#DDDDDD</color>
+    <!-- Minimalist Dark Surfaces -->
+    <color name="app_background_start">#0B0F17</color>
+    <color name="app_background_end">#090D14</color>
+    <color name="surface_card">#131924</color>
+    <color name="surface_card_alt">#1A2230</color>
+    <color name="surface_card_high">#222B3C</color>
+    <color name="card_stroke">#263042</color>
+    <color name="menu_background">#1A2230</color>
+
+    <!-- Brand & Accents -->
+    <color name="brand_ink">#F3F4F6</color>
+    <color name="brand_teal">#F3F4F6</color>
+    <color name="brand_coral">#F87171</color>
+    <color name="brand_gold">#34D399</color>
+    <color name="brand_mint">#1E293B</color>
+    <color name="hero_content">#F9FAFB</color>
+
+    <!-- Matte Elevated Slate Hero Card -->
+    <color name="hero_gradient_start">#161F30</color>
+    <color name="hero_gradient_mid">#1B2538</color>
+    <color name="hero_gradient_end">#222E44</color>
+    <color name="sheet_gradient_start">#131924</color>
+    <color name="sheet_gradient_end">#131924</color>
+    <color name="expense_gradient_start">#131924</color>
+    <color name="expense_gradient_end">#131924</color>
+
+    <!-- Text & Controls -->
+    <color name="sheet_card_background">#131924</color>
+    <color name="text_primary">#F3F4F6</color>
+    <color name="text_secondary">#9CA3AF</color>
+    <color name="text_hint">#6B7280</color>
+    <color name="icon_tint">#E5E7EB</color>
+    <color name="button_primary_background">#F3F4F6</color>
+    <color name="button_primary_text">#111827</color>
+    <color name="button_secondary_background">#1F2937</color>
+    <color name="button_secondary_text">#E5E7EB</color>
+    <color name="spinner_popup_background">#1A2230</color>
+    <color name="receive_text">#34D399</color>
+    <color name="give_text">#F87171</color>
+
+    <!-- Settlement & Money Transfer Cards -->
+    <color name="settlement_card_bg">#0E231C</color>
+    <color name="settlement_card_stroke">#1B4332</color>
+    <color name="settlement_panel_bg">#143026</color>
+    <color name="settlement_accent">#34D399</color>
+    <color name="settlement_button_bg">#133829</color>
+    <color name="settlement_button_stroke">#245B43</color>
+    <color name="transfer_card_bg">#261217</color>
+    <color name="transfer_card_stroke">#522029</color>
+    <color name="transfer_panel_bg">#32181F</color>
+    <color name="transfer_accent">#F87171</color>
+    <color name="carryover_card_bg">#101E33</color>
+    <color name="carryover_card_stroke">#243B61</color>
+    <color name="carryover_panel_bg">#162945</color>
+    <color name="carryover_accent">#60A5FA</color>
 </resources>

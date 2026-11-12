@@ -2,13 +2,13 @@ package com.raptor.billsplitter
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.raptor.billsplitter.data.BillSplitterDao
+import com.raptor.billsplitter.data.AppDatabase
 
-class MainViewModelFactory(private val dao: BillSplitterDao) : ViewModelProvider.Factory {
+class MainViewModelFactory(private val database: AppDatabase) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(dao) as T
+            return MainViewModel(database) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

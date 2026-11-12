@@ -30,26 +30,27 @@ class SheetViewModel(private val dao: BillSplitterDao, private val sheetId: Int)
         date: Date,
         consumers: List<Int>,
         consumerWeights: List<Pair<Int, Double>>,
-        notes: String?
-    ) {
-        viewModelScope.launch {
-            val newItem = Item(
-                sheetID = sheetId,
-                itemName = itemName,
-                amount = amount,
-                payerID = payerId,
-                dateCreated = date,
-                dateModified = date,
-                notes = notes
-            )
-            val itemId = dao.insertItem(newItem).toInt()
+        notes: String?,
+        itemType: Int = Item.TYPE_EXPENSE
+    ) = viewModelScope.launch {
+        if (dao.getSheetSnapshot(sheetId)?.isReadOnly == true) return@launch
+        val newItem = Item(
+            sheetID = sheetId,
+            itemName = itemName,
+            amount = amount,
+            payerID = payerId,
+            dateCreated = date,
+            dateModified = date,
+            notes = notes,
+            itemType = itemType
+        )
+        val itemId = dao.insertItem(newItem).toInt()
 
-            val itemConsumers = consumerWeights.map {
-                ItemConsumer(itemId, it.first, it.second)
-            }
-            dao.insertItemConsumers(itemConsumers)
-            dao.updateSheetDateModified(sheetId, Date())
+        val itemConsumers = consumerWeights.map {
+            ItemConsumer(itemId, it.first, it.second)
         }
+        dao.insertItemConsumers(itemConsumers)
+        dao.updateSheetDateModified(sheetId, Date())
     }
 
     fun updateItem(
@@ -62,6 +63,7 @@ class SheetViewModel(private val dao: BillSplitterDao, private val sheetId: Int)
         notes: String?
     ) {
         viewModelScope.launch {
+            if (dao.getSheetSnapshot(sheetId)?.isReadOnly == true) return@launch
             dao.updateItemDetails(itemId, itemName, amount, payerId, Date(), notes)
             dao.deleteItemConsumersByItemId(itemId)
             val itemConsumers = consumerWeights.map {
@@ -74,6 +76,7 @@ class SheetViewModel(private val dao: BillSplitterDao, private val sheetId: Int)
 
     fun deleteItem(itemId: Int) {
         viewModelScope.launch {
+            if (dao.getSheetSnapshot(sheetId)?.isReadOnly == true) return@launch
             dao.deleteItemConsumersByItemId(itemId)
             dao.deleteItem(itemId)
             dao.updateSheetDateModified(sheetId, Date())

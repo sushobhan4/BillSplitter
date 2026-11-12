@@ -6,106 +6,98 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="20dp"
-    android:layout_marginVertical="10dp"
+    android:layout_marginVertical="6dp"
     android:clickable="true"
     android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/surface_card"
     app:cardCornerRadius="16dp"
-    app:cardElevation="8dp"
-    app:rippleColor="@android:color/white">
+    app:cardElevation="0dp"
+    app:rippleColor="@color/surface_card_high"
+    app:strokeColor="@color/card_stroke"
+    app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/sheet_card_gradient"
-        android:padding="15dp">
+        android:padding="18dp">
 
-        <!-- HEADER CONTAINER: Name + Spacer + Amount -->
-        <!-- Anchored to the start of the Menu Button -->
-        <LinearLayout
-            android:id="@+id/header_layout"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/sheetStatus"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            app:layout_constraintEnd_toStartOf="@+id/btnMenu"
+            android:letterSpacing="0.08"
+            android:text="ACTIVE SHEET"
+            android:textColor="@color/receive_text"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/btnMenu"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toTopOf="@+id/btnMenu" />
 
-            <HorizontalScrollView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:scrollbars="none">
-
-                <TextView
-                    android:id="@+id/expenseName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Home"
-                    android:textColor="@android:color/white"
-                    android:textSize="40sp"
-                    android:textStyle="bold"
-                    android:singleLine="true" />
-            </HorizontalScrollView>
-
-            <!-- Spacer to push Amount to the right -->
-            <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
-            <TextView
-                android:id="@+id/sheetAmount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="0.00"
-                android:textColor="@android:color/white"
-                android:textSize="32sp"
-                android:textStyle="bold" />
-
-        </LinearLayout>
-
-        <!-- 3 Dots Menu Icon -->
         <ImageView
             android:id="@+id/btnMenu"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
-            android:contentDescription="Options"
-            android:padding="0dp"
+            android:contentDescription="Sheet options"
+            android:padding="6dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/dots"
-            app:tint="@android:color/white" />
+            app:srcCompat="@drawable/ic_lucide_ellipsis_vertical"
+            app:tint="@color/text_hint" />
 
-        <!-- Horizontal Scrollable List of Names -->
-        <HorizontalScrollView
-            android:id="@+id/scrollNames"
+        <TextView
+            android:id="@+id/expenseName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:scrollbars="none"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="14dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="2"
+            android:textColor="@color/text_primary"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/sheetAmount"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnMenu"
+            tools:text="Trip to Iceland" />
+
+        <TextView
+            android:id="@+id/sheetAmount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_amount_chip"
+            android:fontFamily="sans-serif-medium"
+            android:minWidth="88dp"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="7dp"
+            android:textAlignment="center"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/expenseName"
+            tools:text="₹1,250.00" />
+
+        <TextView
+            android:id="@+id/contributorList"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_nested_panel"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="9dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/header_layout">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/contributorList"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Alice Garry Bob Charlie David"
-                    android:textColor="@android:color/white"
-                    android:textSize="16sp" />
-            </LinearLayout>
-
-        </HorizontalScrollView>
+            app:layout_constraintTop_toBottomOf="@+id/expenseName"
+            tools:text="Alex Morgan, Jane Doe, Sam" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

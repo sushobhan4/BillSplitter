@@ -3,13 +3,59 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <color name="sheet_card_background">#FFFFFFFF</color>
-    <color name="text_primary">#111111</color>
-    <color name="text_secondary">#444444</color>
-    <color name="text_hint">#999999</color>
-    <color name="icon_tint">#888888</color>
-    <color name="button_primary_background">#111111</color>
+    <!-- Minimalist Light Surfaces -->
+    <color name="app_background_start">#F8F9FB</color>
+    <color name="app_background_end">#F4F5F8</color>
+    <color name="surface_card">#FFFFFF</color>
+    <color name="surface_card_alt">#F2F4F7</color>
+    <color name="surface_card_high">#EAECEF</color>
+    <color name="card_stroke">#E4E7EC</color>
+    <color name="menu_background">#FFFFFF</color>
+
+    <!-- Brand & Accents -->
+    <color name="brand_ink">#111827</color>
+    <color name="brand_teal">#18181B</color>
+    <color name="brand_coral">#DC2626</color>
+    <color name="brand_gold">#059669</color>
+    <color name="brand_mint">#EFF6FF</color>
+    <color name="hero_content">#FFFFFF</color>
+
+    <!-- Matte Obsidian Hero Card -->
+    <color name="hero_gradient_start">#111827</color>
+    <color name="hero_gradient_mid">#182132</color>
+    <color name="hero_gradient_end">#1F2937</color>
+    <color name="sheet_gradient_start">#FFFFFF</color>
+    <color name="sheet_gradient_end">#FFFFFF</color>
+    <color name="expense_gradient_start">#FFFFFF</color>
+    <color name="expense_gradient_end">#FFFFFF</color>
+
+    <!-- Text & Controls -->
+    <color name="sheet_card_background">#FFFFFF</color>
+    <color name="text_primary">#111827</color>
+    <color name="text_secondary">#4B5563</color>
+    <color name="text_hint">#9CA3AF</color>
+    <color name="icon_tint">#18181B</color>
+    <color name="button_primary_background">#18181B</color>
     <color name="button_primary_text">#FFFFFF</color>
-    <color name="button_secondary_background">#F0F0F0</color>
-    <color name="button_secondary_text">#333333</color>
+    <color name="button_secondary_background">#F2F4F7</color>
+    <color name="button_secondary_text">#18181B</color>
+    <color name="spinner_popup_background">#FFFFFF</color>
+    <color name="receive_text">#059669</color>
+    <color name="give_text">#DC2626</color>
+
+    <!-- Settlement & Money Transfer Cards -->
+    <color name="settlement_card_bg">#ECFDF5</color>
+    <color name="settlement_card_stroke">#A7F3D0</color>
+    <color name="settlement_panel_bg">#D1FAE5</color>
+    <color name="settlement_accent">#059669</color>
+    <color name="settlement_button_bg">#DCFCE7</color>
+    <color name="settlement_button_stroke">#86EFAC</color>
+    <color name="transfer_card_bg">#FEF2F2</color>
+    <color name="transfer_card_stroke">#FECACA</color>
+    <color name="transfer_panel_bg">#FEE2E2</color>
+    <color name="transfer_accent">#DC2626</color>
+    <color name="carryover_card_bg">#EFF6FF</color>
+    <color name="carryover_card_stroke">#BFDBFE</color>
+    <color name="carryover_panel_bg">#DBEAFE</color>
+    <color name="carryover_accent">#2563EB</color>
 </resources>
