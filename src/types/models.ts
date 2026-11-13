@@ -44,6 +44,7 @@ export interface ItemWithPayerAndConsumers {
   item: Item;
   payer: Contributor;
   consumers: Contributor[];
+  consumerWeights?: ItemConsumer[];
 }
 
 export interface SheetWithContributorsAndItems {

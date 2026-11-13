@@ -45,7 +45,7 @@ const SheetCardMenu: React.FC<{
 
   return (
     <div
-      className={`absolute right-0 top-8 z-30 w-44 rounded-2xl bg-surface py-1.5 shadow-xl border border-cardStroke origin-top-right ${
+      className={`absolute right-0 top-8 z-50 w-44 rounded-2xl bg-surface py-1.5 shadow-2xl border border-cardStroke origin-top-right ${
         isClosing ? 'animate-popup-morph-exit' : 'animate-popup-morph-enter'
       }`}
       onClick={(e) => e.stopPropagation()}
@@ -53,7 +53,10 @@ const SheetCardMenu: React.FC<{
       {!item.sheet.isReadOnly && (
         <button
           type="button"
-          onClick={onEdit}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
           className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
         >
           <Pencil className="w-4 h-4 text-textSecondary" />
@@ -65,7 +68,10 @@ const SheetCardMenu: React.FC<{
 
       <button
         type="button"
-        onClick={onExport}
+        onClick={(e) => {
+          e.stopPropagation();
+          onExport();
+        }}
         className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
       >
         <Share2 className="w-4 h-4 text-textSecondary" />
@@ -77,7 +83,10 @@ const SheetCardMenu: React.FC<{
           <div className="border-t border-cardStroke" />
           <button
             type="button"
-            onClick={onClone}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClone();
+            }}
             className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
           >
             <Copy className="w-4 h-4 text-textSecondary" />
@@ -90,7 +99,10 @@ const SheetCardMenu: React.FC<{
 
       <button
         type="button"
-        onClick={onDetails}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDetails();
+        }}
         className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
       >
         <Info className="w-4 h-4 text-textSecondary" />
@@ -101,7 +113,10 @@ const SheetCardMenu: React.FC<{
 
       <button
         type="button"
-        onClick={onDelete}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
         className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-giveText hover:bg-giveText/10 flex items-center gap-3 transition-colors"
       >
         <Trash2 className="w-4 h-4 text-giveText" />
@@ -150,7 +165,7 @@ const FabMenu: React.FC<{
 };
 
 export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
-  const { sheets, loading } = useSheets();
+  const { sheets, loading, refresh: refreshSheets } = useSheets();
 
   // Search & Sorting
   const [searchQuery, setSearchQuery] = useState('');
@@ -172,6 +187,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
   const [exportingSheet, setExportingSheet] = useState<SheetWithContributorsAndItems | null>(null);
   const [detailsSheet, setDetailsSheet] = useState<SheetWithContributorsAndItems | null>(null);
   const [deletingSheet, setDeletingSheet] = useState<SheetWithContributorsAndItems | null>(null);
+  const lastDeletingSheetRef = useRef<SheetWithContributorsAndItems | null>(null);
+  if (deletingSheet) {
+    lastDeletingSheetRef.current = deletingSheet;
+  }
+  const dialogSheet = deletingSheet || lastDeletingSheetRef.current;
 
   // FAB Popover Menu
   const [isFabMenuOpen, setIsFabMenuOpen] = useState(false);
@@ -255,8 +275,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
 
   const handleDeleteSheetConfirm = async () => {
     if (deletingSheet) {
-      await dbClient.deleteSheet(deletingSheet.sheet.sheetID);
-      setDeletingSheet(null);
+      const sheetIdToDelete = deletingSheet.sheet.sheetID;
+      try {
+        await dbClient.deleteSheet(sheetIdToDelete);
+        await refreshSheets();
+      } catch (err) {
+        console.error('[HomePage] deleteSheet failed:', err);
+      } finally {
+        setDeletingSheet(null);
+      }
     }
   };
 
@@ -353,11 +380,19 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
       />
 
       {/* Top Header & Search Bar matching activity_main.xml (pinned top area) */}
-      <div className="shrink-0 px-4 pt-4 pb-2 z-10 bg-gradient-to-b from-bgStart via-bgStart to-transparent">
+      <div
+        className="shrink-0 px-4 pb-2 z-10 bg-gradient-to-b from-bgStart via-bgStart to-transparent"
+        style={{
+          paddingTop: 'max(1rem, env(safe-area-inset-top, 1rem))',
+          paddingLeft: 'max(1rem, env(safe-area-inset-left, 1rem))',
+          paddingRight: 'max(1rem, env(safe-area-inset-right, 1rem))',
+        }}
+      >
         <header className="flex items-center justify-between pb-3 px-1">
           <div className="flex items-center gap-3">
             <img
-              src={`${import.meta.env.BASE_URL}logo.svg`}
+              src={`${import.meta.env.BASE_URL}logo.png`}
+              srcSet={`${import.meta.env.BASE_URL}logo.svg`}
               alt="Bill Splitter"
               className="w-8 h-8 object-contain shrink-0 select-none"
             />
@@ -405,7 +440,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
       </div>
 
       {/* Sheet List matching recyclerView in activity_main.xml */}
-      <main className="flex-1 overflow-y-auto px-4 pt-1 pb-28 space-y-3 overscroll-contain">
+      <main
+        className="flex-1 overflow-y-auto pt-1 space-y-3 overscroll-contain"
+        style={{
+          paddingBottom: 'max(7rem, calc(env(safe-area-inset-bottom, 0px) + 6rem))',
+          paddingLeft: 'max(1rem, env(safe-area-inset-left, 1rem))',
+          paddingRight: 'max(1rem, env(safe-area-inset-right, 1rem))',
+        }}
+      >
         {loading ? (
           <div className="py-20 text-center text-sm font-medium text-textHint">
             Loading sheets...
@@ -414,7 +456,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
           <div className="py-14 px-6 text-center rounded-2xl bg-surface border border-cardStroke shadow-sm flex flex-col items-center">
             {!searchQuery && (
               <img
-                src={`${import.meta.env.BASE_URL}logo.svg`}
+                src={`${import.meta.env.BASE_URL}logo.png`}
+                srcSet={`${import.meta.env.BASE_URL}logo.svg`}
                 alt="Bill Splitter"
                 className="w-16 h-16 mb-4 object-contain opacity-90 select-none drop-shadow-sm"
               />
@@ -457,7 +500,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
               <div
                 key={sheet.sheetID}
                 onClick={() => onOpenSheet(sheet.sheetID)}
-                className="relative p-[18px] rounded-2xl bg-surface border border-cardStroke shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer group"
+                className={`relative p-[18px] rounded-2xl bg-surface border border-cardStroke shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer group ${
+                  isMenuOpen ? 'z-40' : 'z-0'
+                }`}
               >
                 {/* Row 1: Status Badge on Left, 3-dot Menu on Right matching sheet_card.xml */}
                 <div className="flex items-center justify-between">
@@ -467,7 +512,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
                     {statusText}
                   </span>
 
-                  <div className="relative">
+                  <div className={`relative ${isMenuOpen ? 'z-50' : ''}`}>
                     <button
                       type="button"
                       onClick={(e) => {
@@ -532,8 +577,25 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
         )}
       </main>
 
+      {/* Click-away backdrop for active card menu or FAB menu */}
+      {(activeMenuSheetId !== null || isFabMenuOpen) && (
+        <div
+          className="fixed inset-0 z-30 bg-transparent"
+          onClick={() => {
+            setActiveMenuSheetId(null);
+            setIsFabMenuOpen(false);
+          }}
+        />
+      )}
+
       {/* Bottom Floating Action Button matching FloatingActionButton in activity_main.xml */}
-      <div className="absolute bottom-6 right-5 z-40">
+      <div
+        className="absolute z-40"
+        style={{
+          bottom: 'max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem))',
+          right: 'max(1.25rem, calc(env(safe-area-inset-right, 0px) + 1.25rem))',
+        }}
+      >
         <div className="relative">
           {/* FAB Popover Menu with morph enter & exit */}
           <FabMenu
@@ -611,7 +673,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
       <ConfirmDialog
         isOpen={Boolean(deletingSheet)}
         title="Delete sheet?"
-        message={`Are you sure you want to permanently delete "${deletingSheet?.sheet.sheetName}" and all of its items?`}
+        message={
+          dialogSheet
+            ? dialogSheet.items.length > 0
+              ? `Are you sure you want to delete "${dialogSheet.sheet.sheetName}"? All ${dialogSheet.items.length} item(s) and balances in this sheet will be permanently deleted.`
+              : `Are you sure you want to delete "${dialogSheet.sheet.sheetName}"? This action cannot be undone.`
+            : ''
+        }
         confirmText="Delete"
         onConfirm={handleDeleteSheetConfirm}
         onCancel={() => setDeletingSheet(null)}

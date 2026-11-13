@@ -124,7 +124,7 @@ export const App: React.FC = () => {
 
   return (
     <div
-      className="w-full flex flex-col overflow-hidden bg-gradient-to-b from-bgStart to-bgEnd text-textPrimary"
+      className="w-full h-full flex flex-col overflow-hidden bg-gradient-to-b from-bgStart to-bgEnd text-textPrimary"
       style={{ height: 'var(--app-height, 100dvh)', maxHeight: 'var(--app-height, 100dvh)' }}
     >
       {currentSheetId ? (

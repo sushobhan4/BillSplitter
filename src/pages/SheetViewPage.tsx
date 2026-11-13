@@ -45,7 +45,7 @@ const ExpenseCardMenu: React.FC<{
 
   return (
     <div
-      className={`absolute right-4 top-12 z-30 w-36 rounded-2xl bg-surface py-1.5 shadow-xl border border-cardStroke origin-top-right ${
+      className={`absolute right-4 top-12 z-50 w-36 rounded-2xl bg-surface py-1.5 shadow-2xl border border-cardStroke origin-top-right ${
         isClosing ? 'animate-popup-morph-exit' : 'animate-popup-morph-enter'
       }`}
       onClick={(e) => e.stopPropagation()}
@@ -220,17 +220,21 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
     const balances: Record<string, number> = {};
     contributors.forEach((c) => (balances[c.contributorName] = 0.0));
 
-    // Flat consumer list
+    // Flat consumer list with real weights when available
     const allConsumers: Array<{ itemID: number; contributorID: number; weight: number }> = [];
     itemsWithDetails.forEach((it) => {
-      it.consumers.forEach((c) => {
-        const share = it.consumers.length > 0 ? it.item.amount / it.consumers.length : 0;
-        allConsumers.push({
-          itemID: it.item.itemID,
-          contributorID: c.contributorID,
-          weight: share,
+      if (it.consumerWeights && it.consumerWeights.length > 0) {
+        allConsumers.push(...it.consumerWeights);
+      } else {
+        it.consumers.forEach((c) => {
+          const share = it.consumers.length > 0 ? it.item.amount / it.consumers.length : 0;
+          allConsumers.push({
+            itemID: it.item.itemID,
+            contributorID: c.contributorID,
+            weight: share,
+          });
         });
-      });
+      }
     });
 
     const netMap = BalanceCalculator.calculateNetBalancesById(
@@ -351,40 +355,48 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
   };
 
   const getDeleteWarning = (item: ItemWithPayerAndConsumers) => {
+    const formattedAmount = formatCurrency(item.item.amount);
     switch (item.item.itemType) {
       case ITEM_TYPE.TYPE_SETTLEMENT:
         return {
-          title: 'Delete payment record?',
-          message: `Deleting this payment will revert member balances. Are you sure you want to delete "${item.item.itemName}"?`,
+          title: 'Delete payment?',
+          message: `Are you sure you want to delete payment "${item.item.itemName}" (${formattedAmount})? Sheet balances will be recalculated.`,
         };
       case ITEM_TYPE.TYPE_MONEY_TRANSFER:
         return {
           title: 'Delete money transfer?',
-          message: `Are you sure you want to delete "${item.item.itemName}"?`,
+          message: `Are you sure you want to delete transfer "${item.item.itemName}" (${formattedAmount})? Sheet balances will be recalculated.`,
         };
       case ITEM_TYPE.TYPE_CARRYOVER:
         return {
           title: 'Delete carried balance?',
-          message: `This balance was carried forward from a cloned sheet. Deleting it will drop the carried balance. Proceed?`,
+          message: `Are you sure you want to delete carried balance "${item.item.itemName}" (${formattedAmount})? Carried balances from the previous sheet will change.`,
         };
       default:
         return {
           title: 'Delete expense?',
-          message: `Are you sure you want to delete "${item.item.itemName}" (${formatCurrency(item.item.amount)})?`,
+          message: `Are you sure you want to delete "${item.item.itemName}" (${formattedAmount})? Sheet balances will be recalculated.`,
         };
     }
   };
 
   return (
     <div
-      className="h-full max-h-dvh max-w-xl w-full mx-auto flex flex-col overflow-hidden relative select-none animate-activity-morph-enter"
+      className="h-full w-full max-w-xl mx-auto flex flex-col overflow-hidden relative select-none animate-activity-morph-enter"
       onClick={() => {
         setActiveMenuItemId(null);
         setIsAddOptionsOpen(false);
       }}
     >
       {/* Pinned Top Bar + Hero Card + Search Bar + EXPENSES label matching sheet_view.xml */}
-      <div className="shrink-0 px-4 pt-2 pb-1 z-10 bg-gradient-to-b from-bgStart via-bgStart to-transparent">
+      <div
+        className="shrink-0 px-4 pb-1 z-10 bg-gradient-to-b from-bgStart via-bgStart to-transparent"
+        style={{
+          paddingTop: 'max(0.5rem, env(safe-area-inset-top, 0.5rem))',
+          paddingLeft: 'max(1rem, env(safe-area-inset-left, 1rem))',
+          paddingRight: 'max(1rem, env(safe-area-inset-right, 1rem))',
+        }}
+      >
         {/* Top Bar matching sheetTopBar in sheet_view.xml */}
         <header className="flex items-center justify-between h-[52px] px-1">
           <button
@@ -470,7 +482,14 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
       </div>
 
       {/* Expense List matching expense_card.xml in Android */}
-      <main className="flex-1 overflow-y-auto px-4 py-1 space-y-2.5 overscroll-contain">
+      <main
+        className="flex-1 overflow-y-auto py-1 space-y-2.5 overscroll-contain"
+        style={{
+          paddingLeft: 'max(1rem, env(safe-area-inset-left, 1rem))',
+          paddingRight: 'max(1rem, env(safe-area-inset-right, 1rem))',
+          paddingBottom: '1.5rem',
+        }}
+      >
         {loading ? (
           <div className="py-20 text-center text-sm font-medium text-textHint">
             Loading expenses...
@@ -535,7 +554,9 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
                   e.preventDefault();
                   setActiveMenuItemId(expense.itemID);
                 }}
-                className={`relative p-4 rounded-2xl border shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer ${cardBg}`}
+                className={`relative p-4 rounded-2xl border shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer ${cardBg} ${
+                  isMenuOpen ? 'z-40' : 'z-0'
+                }`}
               >
                 {/* Header row: Icon bubble + Name & Date + Amount & 3-dot */}
                 <div className="flex items-start justify-between gap-3">
@@ -623,7 +644,14 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
       </main>
 
       {/* Bottom Sticky Action Bar matching sheet_view.xml */}
-      <footer className="shrink-0 p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-bgEnd via-bgEnd to-transparent z-20">
+      <footer
+        className="shrink-0 p-4 bg-gradient-to-t from-bgEnd via-bgEnd to-transparent z-20"
+        style={{
+          paddingBottom: 'max(1.25rem, calc(env(safe-area-inset-bottom, 0px) + 0.75rem))',
+          paddingLeft: 'max(1rem, env(safe-area-inset-left, 1rem))',
+          paddingRight: 'max(1rem, env(safe-area-inset-right, 1rem))',
+        }}
+      >
         <div className="flex items-center gap-3">
           {itemsWithDetails.length > 0 && (
             <button
@@ -735,6 +763,17 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
           )}
         </div>
       </footer>
+
+      {/* Click-away backdrop for active card menu or options popup */}
+      {(activeMenuItemId !== null || isAddOptionsOpen) && (
+        <div
+          className="fixed inset-0 z-30 bg-transparent"
+          onClick={() => {
+            setActiveMenuItemId(null);
+            setIsAddOptionsOpen(false);
+          }}
+        />
+      )}
 
       {/* Dialogs */}
       <SortExpenseDialog

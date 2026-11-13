@@ -260,14 +260,20 @@ function getSheetDetails(db: any, sheetId: number): {
     );
 
     const consumers: Contributor[] = [];
+    const consumerWeights: ItemConsumer[] = [];
     for (const c of consumersRaw) {
+      consumerWeights.push({
+        itemID: item.itemID,
+        contributorID: c.contributorID,
+        weight: c.weight,
+      });
       const found = contribMap.get(c.contributorID);
       if (found) {
         consumers.push(found);
       }
     }
 
-    itemsWithDetails.push({ item, payer, consumers });
+    itemsWithDetails.push({ item, payer, consumers, consumerWeights });
   }
 
   return { sheet, contributors, itemsWithDetails };
@@ -369,10 +375,59 @@ function updateSheet(
 }
 
 function deleteSheet(db: any, sheetId: number) {
-  db.exec({
-    sql: `DELETE FROM sheets WHERE sheetID = ?`,
-    bind: [sheetId],
-  });
+  const id = Number(sheetId);
+  if (isNaN(id) || id <= 0) return;
+
+  const existingSheet = queryOne(db, `SELECT * FROM sheets WHERE sheetID = ?`, [id]);
+  if (!existingSheet) return;
+
+  // Turn foreign keys off during sheet cascade delete to eliminate any cyclic or cross-sheet constraint lock
+  db.exec('PRAGMA foreign_keys = OFF;');
+  db.exec('BEGIN TRANSACTION;');
+  try {
+    // 1. Delete all item consumers for items belonging to this sheet
+    db.exec({
+      sql: `DELETE FROM item_consumers WHERE itemID IN (SELECT itemID FROM items WHERE sheetID = ?)`,
+      bind: [id],
+    });
+
+    // 2. Delete all item consumers referencing contributors belonging to this sheet
+    db.exec({
+      sql: `DELETE FROM item_consumers WHERE contributorID IN (SELECT contributorID FROM contributors WHERE sheetID = ?)`,
+      bind: [id],
+    });
+
+    // 3. Delete all items in this sheet
+    db.exec({
+      sql: `DELETE FROM items WHERE sheetID = ?`,
+      bind: [id],
+    });
+
+    // 4. Delete all items whose payer belongs to this sheet
+    db.exec({
+      sql: `DELETE FROM items WHERE payerID IN (SELECT contributorID FROM contributors WHERE sheetID = ?)`,
+      bind: [id],
+    });
+
+    // 5. Delete all contributors in this sheet
+    db.exec({
+      sql: `DELETE FROM contributors WHERE sheetID = ?`,
+      bind: [id],
+    });
+
+    // 6. Delete the sheet row itself
+    db.exec({
+      sql: `DELETE FROM sheets WHERE sheetID = ?`,
+      bind: [id],
+    });
+
+    db.exec('COMMIT;');
+  } catch (err) {
+    db.exec('ROLLBACK;');
+    throw err;
+  } finally {
+    db.exec('PRAGMA foreign_keys = ON;');
+  }
 }
 
 function insertItem(

@@ -56,30 +56,26 @@ export const AddEditSheetDialog: React.FC<AddEditSheetDialogProps> = ({
     }
 
     if (cloneSource) {
-      if (carryoverBalances && carryoverBalances.length > 0) {
-        const rows = carryoverBalances.map((cb) => ({
-          tempId: nextIdRef.current--,
-          originalId: 0,
-          name: cb.name,
-          carryoverBalance: cb.balance,
-        }));
-        while (rows.length < 2) {
-          rows.push({
-            tempId: nextIdRef.current--,
-            originalId: 0,
-            name: '',
-            carryoverBalance: 0,
-          });
+      // Map carryover balances by contributor name (case-insensitive)
+      const balanceMap = new Map<string, number>();
+      if (carryoverBalances) {
+        for (const cb of carryoverBalances) {
+          balanceMap.set(cb.name.trim().toLowerCase(), cb.balance);
         }
-        return rows;
       }
 
-      const rows = cloneSource.contributors.map((c) => ({
-        tempId: nextIdRef.current--,
-        originalId: 0,
-        name: c.contributorName,
-        carryoverBalance: 0,
-      }));
+      // Preserve ALL past members from cloneSource.contributors
+      const rows: ContributorRow[] = cloneSource.contributors.map((c) => {
+        const trimmedName = c.contributorName.trim();
+        const bal = balanceMap.get(trimmedName.toLowerCase()) ?? 0;
+        return {
+          tempId: nextIdRef.current--,
+          originalId: 0,
+          name: c.contributorName,
+          carryoverBalance: bal,
+        };
+      });
+
       while (rows.length < 2) {
         rows.push({
           tempId: nextIdRef.current--,
@@ -153,22 +149,28 @@ export const AddEditSheetDialog: React.FC<AddEditSheetDialogProps> = ({
   const requestRemoveRow = (row: ContributorRow) => {
     // If cloned with carryover and non-zero balance
     if (Math.abs(row.carryoverBalance) >= 0.005) {
+      const formattedAmount = formatCurrency(Math.abs(row.carryoverBalance));
+      const displayName = row.name.trim() || 'This member';
+      const message =
+        row.carryoverBalance > 0
+          ? `${displayName} will receive ${formattedAmount} from the previous sheet. Deleting them will drop their carried-over balance.`
+          : `${displayName} owes ${formattedAmount} from the previous sheet. Deleting them will drop their carried-over balance.`;
+
       setPendingDeleteRow(row);
       setDeleteConfirmInfo({
         title: 'Drop carried balance?',
-        message: `${row.name || 'This member'} has an unsettled balance of ₹${Math.abs(
-          row.carryoverBalance
-        ).toFixed(2)}. Dropping them will exclude their balance from the cloned sheet.`,
+        message,
       });
       return;
     }
 
-    // If editing and existing member
-    if (isEditing && row.originalId > 0 && row.name.trim().length > 0) {
+    // If editing or cloning and existing member name
+    if ((isEditing || cloneSource) && row.name.trim().length > 0) {
+      const displayName = row.name.trim() || 'this member';
       setPendingDeleteRow(row);
       setDeleteConfirmInfo({
         title: 'Remove member?',
-        message: `Are you sure you want to remove "${row.name}" from this sheet?`,
+        message: `Are you sure you want to remove "${displayName}" from this sheet?`,
       });
       return;
     }
@@ -203,7 +205,7 @@ export const AddEditSheetDialog: React.FC<AddEditSheetDialogProps> = ({
       .filter((r) => r.name.length > 0);
 
     if (validContributors.length < 2) {
-      setErrorMsg('A sheet requires at least 2 members with non-empty names.');
+      setErrorMsg('Need at least 2 valid contributors');
       return;
     }
 
@@ -352,7 +354,7 @@ export const AddEditSheetDialog: React.FC<AddEditSheetDialogProps> = ({
                 type="submit"
                 className="flex-1 h-[48px] rounded-xl text-sm font-bold text-btnPrimaryText bg-btnPrimaryBg hover:opacity-90 transition-opacity"
               >
-                {isEditing ? 'Save' : 'Create'}
+                {isEditing ? 'Save' : 'Create Sheet'}
               </button>
             </div>
           </form>

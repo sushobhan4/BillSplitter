@@ -213,7 +213,7 @@ export const BalancesDialog: React.FC<BalancesDialogProps> = ({
                         {transfer.fromName} → {transfer.toName}
                       </p>
                       <p className="text-[13px] font-bold text-giveText mt-0.5">
-                        {formatCurrency(transfer.amount)}
+                        Pay {formatCurrency(transfer.amount)}
                       </p>
                     </div>
 
@@ -252,10 +252,10 @@ export const BalancesDialog: React.FC<BalancesDialogProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-[19px] font-bold text-textPrimary tracking-tight">
-              Paid to whom?
+              Who did {recipientPrompt.debtorName} pay?
             </h3>
             <p className="text-xs text-textSecondary mt-1 leading-relaxed">
-              Who did <span className="font-bold text-textPrimary">{recipientPrompt.debtorName}</span> pay?
+              Total to pay: {formatCurrency(recipientPrompt.amountOwed)}
             </p>
 
             <div className="mt-4 space-y-2 max-h-56 overflow-y-auto pr-0.5">
@@ -280,8 +280,8 @@ export const BalancesDialog: React.FC<BalancesDialogProps> = ({
                     <span className="text-sm font-bold text-textPrimary truncate mr-2">
                       {rec.name}
                     </span>
-                    <span className="text-xs font-bold text-receiveText shrink-0">
-                      Up to {formatCurrency(payAmount)}
+                    <span className="text-xs font-bold text-settleAccent shrink-0">
+                      Pay {formatCurrency(payAmount)} (owed {formatCurrency(rec.amountOwed)})
                     </span>
                   </button>
                 );

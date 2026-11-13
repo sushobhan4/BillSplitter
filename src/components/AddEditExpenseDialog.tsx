@@ -324,7 +324,7 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
 
       if (Math.abs(sumFromRows - totalAmount) > 0.01) {
         setWarningMsg(
-          `Total of splits (₹${sumFromRows.toFixed(2)}) must equal ₹${totalAmount.toFixed(2)}`
+          `The sum of individual amounts must equal the total amount. (Current sum: ${sumFromRows.toFixed(2)})`
         );
         return;
       }
@@ -383,8 +383,22 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
                 min="0"
                 value={totalAmountStr}
                 onChange={(e) => {
-                  setTotalAmountStr(e.target.value);
+                  const val = e.target.value;
+                  setTotalAmountStr(val);
                   setWarningMsg(null);
+                  if (!isEqualSplit) {
+                    const newTotal = parseFloat(val) || 0;
+                    if (newTotal > 0) {
+                      const nextAmts = { ...rowAmounts };
+                      checkedIds.forEach((id) => {
+                        const perc = parseFloat(rowPercentages[id] || '0') || 0;
+                        if (perc > 0) {
+                          nextAmts[id] = ((newTotal * perc) / 100.0).toFixed(2);
+                        }
+                      });
+                      setRowAmounts(nextAmts);
+                    }
+                  }
                 }}
                 placeholder="0.00"
                 className="w-full text-center text-[40px] font-bold bg-transparent text-textPrimary placeholder:text-textHint outline-none border-none py-1 leading-none tracking-tight focus:outline-none focus:ring-0"

@@ -58,11 +58,14 @@ export const MoneyTransferDialog: React.FC<MoneyTransferDialogProps> = ({
       ? 'Edit Money Transfer'
       : 'Money Transfer';
 
+  const fromCandidates = sortedContributors.filter((c) => c.contributorID !== toId);
+  const toCandidates = sortedContributors.filter((c) => c.contributorID !== fromId);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const amount = parseFloat(amountStr) || 0;
     if (amount <= 0) {
-      setErrorMsg('Please enter a valid amount.');
+      setErrorMsg('Invalid amount.');
       return;
     }
     if (!fromId) {
@@ -146,8 +149,8 @@ export const MoneyTransferDialog: React.FC<MoneyTransferDialogProps> = ({
               </label>
               <CustomSelect
                 value={fromId}
-                placeholder="Select sender"
-                options={sortedContributors.map((c) => ({
+                placeholder="From"
+                options={fromCandidates.map((c) => ({
                   value: c.contributorID,
                   label: c.contributorName,
                 }))}
@@ -165,8 +168,8 @@ export const MoneyTransferDialog: React.FC<MoneyTransferDialogProps> = ({
               </label>
               <CustomSelect
                 value={toId}
-                placeholder="Select recipient"
-                options={sortedContributors.map((c) => ({
+                placeholder="To"
+                options={toCandidates.map((c) => ({
                   value: c.contributorID,
                   label: c.contributorName,
                 }))}

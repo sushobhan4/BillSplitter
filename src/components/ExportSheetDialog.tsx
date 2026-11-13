@@ -64,8 +64,41 @@ export const ExportSheetDialog: React.FC<ExportSheetDialogProps> = ({
           </button>
         </div>
 
-        {/* Read-Only Option */}
-        <div className="mt-4 p-3.5 rounded-xl bg-surfaceAlt border border-cardStroke">
+        {/* Action Buttons matching btnExportShare & btnExportSave in dialog_export_sheet.xml */}
+        <div className="mt-4 space-y-2.5">
+          <button
+            type="button"
+            onClick={() => {
+              onExport(isOriginallyReadOnly || makeReadOnly, 'share');
+              onClose();
+            }}
+            className="w-full p-4 rounded-xl bg-surfaceAlt hover:bg-surfaceHigh border border-cardStroke flex items-center gap-3.5 transition-colors text-left"
+          >
+            <Share2 className="w-5 h-5 text-textPrimary shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="text-base font-bold text-textPrimary block">Share</span>
+              <span className="text-xs text-textSecondary block mt-0.5">Send .bsplit file via another app</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              onExport(isOriginallyReadOnly || makeReadOnly, 'save');
+              onClose();
+            }}
+            className="w-full p-4 rounded-xl bg-surfaceAlt hover:bg-surfaceHigh border border-cardStroke flex items-center gap-3.5 transition-colors text-left"
+          >
+            <Download className="w-5 h-5 text-textPrimary shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="text-base font-bold text-textPrimary block">Save to device</span>
+              <span className="text-xs text-textSecondary block mt-0.5">Save .bsplit file to your phone storage</span>
+            </div>
+          </button>
+        </div>
+
+        {/* Read-Only Option matching rowExportReadOnly in dialog_export_sheet.xml */}
+        <div className="mt-3 p-3.5 rounded-xl bg-surfaceAlt border border-cardStroke">
           <label className="flex items-start gap-3 cursor-pointer select-none">
             <input
               type="checkbox"
@@ -76,43 +109,16 @@ export const ExportSheetDialog: React.FC<ExportSheetDialogProps> = ({
             />
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold text-textPrimary">Export as read-only</span>
-                <Lock className="w-3.5 h-3.5 text-textSecondary" />
+                <span className="text-sm font-bold text-textPrimary">Read only</span>
+                {isOriginallyReadOnly && <Lock className="w-3.5 h-3.5 text-textSecondary" />}
               </div>
               <p className="mt-0.5 text-xs text-textSecondary leading-relaxed">
                 {isOriginallyReadOnly
                   ? 'This sheet is strictly read-only and can only be exported as read-only.'
-                  : 'Recipients can view expenses and balances, but cannot edit, add, or delete items.'}
+                  : 'Block editing, adding, deleting, and cloning after import'}
               </p>
             </div>
           </label>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="mt-4 space-y-2.5">
-          <button
-            type="button"
-            onClick={() => {
-              onExport(isOriginallyReadOnly || makeReadOnly, 'share');
-              onClose();
-            }}
-            className="w-full h-[46px] rounded-xl bg-btnPrimaryBg text-btnPrimaryText font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-sm"
-          >
-            <Share2 className="w-4 h-4" />
-            Share (.bsplit)
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              onExport(isOriginallyReadOnly || makeReadOnly, 'save');
-              onClose();
-            }}
-            className="w-full h-[46px] rounded-xl bg-surfaceAlt hover:bg-surfaceHigh text-textPrimary font-bold text-sm flex items-center justify-center gap-2 border border-cardStroke transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            Save to Device
-          </button>
         </div>
       </div>
     </div>
