@@ -8,7 +8,16 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: [
+        'favicon.svg',
+        'apple-touch-icon.png',
+        'logo.svg',
+        'logo.png',
+        'pwa-192x192.png',
+        'pwa-512x512.png',
+        'pwa-192x192.svg',
+        'pwa-512x512.svg'
+      ],
       manifest: {
         name: 'Bill Splitter',
         short_name: 'BillSplitter',
@@ -18,6 +27,17 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait-primary',
         icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
           {
             src: 'pwa-192x192.svg',
             sizes: '192x192',

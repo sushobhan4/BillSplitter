@@ -1,5 +1,9 @@
 # BillSplitter Universal (PWA)
 
+<p align="center">
+  <img src="public/logo.svg" width="96" height="96" alt="Bill Splitter Logo" />
+</p>
+
 An offline-first Progressive Web App clone of the **BillSplitter** Android application, built with **React**, **TypeScript**, **SQLite WASM**, and **OPFS** persistence.
 
 > **Branch note:** The native Android Kotlin app lives on the [`android-app`](https://github.com/sushobhan4/BillSplitter/tree/android-app) branch. This `main` branch hosts the Universal Web PWA, configured for deployment via GitHub Pages.

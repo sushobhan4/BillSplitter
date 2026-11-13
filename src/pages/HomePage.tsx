@@ -355,9 +355,16 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
       {/* Top Header & Search Bar matching activity_main.xml (pinned top area) */}
       <div className="shrink-0 px-4 pt-4 pb-2 z-10 bg-gradient-to-b from-bgStart via-bgStart to-transparent">
         <header className="flex items-center justify-between pb-3 px-1">
-          <h1 className="text-[34px] font-bold tracking-tight text-textPrimary leading-none">
-            Bill Sheets
-          </h1>
+          <div className="flex items-center gap-3">
+            <img
+              src={`${import.meta.env.BASE_URL}logo.svg`}
+              alt="Bill Splitter"
+              className="w-8 h-8 object-contain shrink-0 select-none"
+            />
+            <h1 className="text-[34px] font-bold tracking-tight text-textPrimary leading-none">
+              Bill Sheets
+            </h1>
+          </div>
           {sheets.length >= 2 && (
             <button
               type="button"
@@ -404,12 +411,19 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
             Loading sheets...
           </div>
         ) : filteredAndSortedSheets.length === 0 ? (
-          <div className="py-16 px-6 text-center rounded-2xl bg-surface border border-cardStroke shadow-sm">
+          <div className="py-14 px-6 text-center rounded-2xl bg-surface border border-cardStroke shadow-sm flex flex-col items-center">
+            {!searchQuery && (
+              <img
+                src={`${import.meta.env.BASE_URL}logo.svg`}
+                alt="Bill Splitter"
+                className="w-16 h-16 mb-4 object-contain opacity-90 select-none drop-shadow-sm"
+              />
+            )}
             <p className="text-sm font-bold text-textSecondary">
               {searchQuery ? 'No sheets match your search' : 'No bill sheets yet'}
             </p>
             {!searchQuery && (
-              <p className="text-xs text-textHint mt-1 leading-relaxed">
+              <p className="text-xs text-textHint mt-1 leading-relaxed max-w-[260px]">
                 Tap the + button below to create your first sheet or import a .bsplit file.
               </p>
             )}
