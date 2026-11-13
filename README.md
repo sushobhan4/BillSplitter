@@ -21,7 +21,13 @@ BillSplitter Universal brings 1-to-1 feature and file compatibility with the nat
 - **Balances & Settlement Plan**: View net balances (`Will receive` / `Will give` / `Settled up`) and an optimized **Who Pays Whom** transfer plan with one-tap **Mark as paid**.
 - **Money Transfers & Carryover**: Record direct member-to-member transfers or clone unsettled balances into a new sheet.
 - **Cross-Platform `.bsplit` Import/Export**: Share and open encrypted `.bsplit` files seamlessly between the Android app and the Web PWA, including optional **Read-Only** exports.
+- **Adaptive Material Design & Morph Transitions**: 1-to-1 match with Android layouts, adaptive high-contrast Material switches (no white-on-white), non-clipping inputs, and fluid morph animations.
 - **Light & Dark Themes**: Matches the Android app's minimalist light and dark palettes.
+
+## Live Demo (GitHub Pages)
+
+The universal PWA is deployed and hosted on GitHub Pages:
+**[https://sushobhan4.github.io/BillSplitter/](https://sushobhan4.github.io/BillSplitter/)**
 
 ## Project Documentation
 
