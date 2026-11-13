@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
 import type { Contributor, ItemWithPayerAndConsumers } from '../types/models';
 import { ITEM_TYPE } from '../types/models';
+import { useMorphPresence } from '../hooks/useMorphPresence';
+import { CustomSelect } from './CustomSelect';
 
 interface MoneyTransferDialogProps {
   isOpen: boolean;
@@ -32,6 +33,8 @@ export const MoneyTransferDialog: React.FC<MoneyTransferDialogProps> = ({
   const [toId, setToId] = useState<number | ''>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const { shouldRender, isClosing } = useMorphPresence(isOpen, 180);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -47,8 +50,6 @@ export const MoneyTransferDialog: React.FC<MoneyTransferDialogProps> = ({
     }
     setErrorMsg(null);
   }, [isOpen, itemToEdit]);
-
-  if (!isOpen) return null;
 
   const title =
     itemToEdit?.item.itemType === ITEM_TYPE.TYPE_SETTLEMENT
@@ -86,101 +87,105 @@ export const MoneyTransferDialog: React.FC<MoneyTransferDialogProps> = ({
     onClose();
   };
 
+  if (!shouldRender) return null;
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-backdrop-in overflow-y-auto"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto ${
+        isClosing ? 'animate-backdrop-out' : 'animate-backdrop-in'
+      }`}
+      style={{
+        height: 'var(--app-height, 100dvh)',
+        maxHeight: 'var(--app-height, 100dvh)',
+      }}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[400px] flex flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke animate-dialog-morph-enter my-auto"
+        className={`w-full max-w-[400px] flex flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke m-auto ${
+          isClosing ? 'animate-dialog-morph-exit' : 'animate-dialog-morph-enter'
+        }`}
+        style={{
+          maxHeight: 'calc(var(--app-height, 100dvh) - 24px)',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Title: Centered 19sp bold */}
-        <h2 className="text-[19px] font-bold text-center text-textPrimary tracking-tight">
+        <h2 className="text-[19px] font-bold text-center text-textPrimary tracking-tight shrink-0">
           {title}
         </h2>
 
-        <form onSubmit={handleSubmit} className="mt-2 space-y-3.5">
-          {/* Amount Section matching Android et_transfer_amount */}
-          <div className="flex flex-col items-center pt-2">
-            <span className="text-[11px] font-bold tracking-[0.12em] text-textHint uppercase">
-              AMOUNT
-            </span>
-            <div className="w-full flex items-center justify-center mt-1">
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={amountStr}
-                onChange={(e) => {
-                  setAmountStr(e.target.value);
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden mt-2">
+          <div className="flex-1 overflow-y-auto px-1 py-1 space-y-3.5">
+            {/* Amount Section matching Android et_transfer_amount */}
+            <div className="flex flex-col items-center pt-2">
+              <span className="text-[11px] font-bold tracking-[0.12em] text-textHint uppercase">
+                AMOUNT
+              </span>
+              <div className="w-full flex items-center justify-center mt-1">
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={amountStr}
+                  onChange={(e) => {
+                    setAmountStr(e.target.value);
+                    setErrorMsg(null);
+                  }}
+                  onFocus={(e) => e.target.scrollIntoView({ block: 'nearest', behavior: 'smooth' })}
+                  placeholder="0.00"
+                  className="w-full text-center text-[40px] font-bold bg-transparent text-textPrimary placeholder:text-textHint outline-none border-none py-1 leading-none tracking-tight focus:outline-none focus:ring-0"
+                  autoFocus={!itemToEdit}
+                />
+              </div>
+            </div>
+
+            {/* FROM Dropdown matching spinner_transfer_from */}
+            <div>
+              <label className="text-[11px] font-bold tracking-[0.08em] text-textHint uppercase block mb-1">
+                FROM
+              </label>
+              <CustomSelect
+                value={fromId}
+                placeholder="Select sender"
+                options={sortedContributors.map((c) => ({
+                  value: c.contributorID,
+                  label: c.contributorName,
+                }))}
+                onChange={(val) => {
+                  setFromId(val ? Number(val) : '');
                   setErrorMsg(null);
                 }}
-                placeholder="0.00"
-                className="w-full text-center text-[40px] font-bold bg-transparent text-textPrimary placeholder:text-textHint outline-none border-none py-1 leading-none tracking-tight"
-                autoFocus={!itemToEdit}
               />
             </div>
-          </div>
 
-          {/* FROM Dropdown matching spinner_transfer_from */}
-          <div>
-            <label className="text-[11px] font-bold tracking-[0.08em] text-textHint uppercase block mb-1">
-              FROM
-            </label>
-            <div className="relative">
-              <select
-                value={fromId}
-                onChange={(e) => {
-                  setFromId(e.target.value ? Number(e.target.value) : '');
-                  setErrorMsg(null);
-                }}
-                className="w-full h-[50px] px-3.5 pr-10 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary text-[15px] appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-textPrimary"
-              >
-                <option value="">Select sender</option>
-                {sortedContributors.map((c) => (
-                  <option key={c.contributorID} value={c.contributorID}>
-                    {c.contributorName}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-textHint absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* TO Dropdown matching spinner_transfer_to */}
-          <div>
-            <label className="text-[11px] font-bold tracking-[0.08em] text-textHint uppercase block mb-1">
-              TO
-            </label>
-            <div className="relative">
-              <select
+            {/* TO Dropdown matching spinner_transfer_to */}
+            <div>
+              <label className="text-[11px] font-bold tracking-[0.08em] text-textHint uppercase block mb-1">
+                TO
+              </label>
+              <CustomSelect
                 value={toId}
-                onChange={(e) => {
-                  setToId(e.target.value ? Number(e.target.value) : '');
+                placeholder="Select recipient"
+                options={sortedContributors.map((c) => ({
+                  value: c.contributorID,
+                  label: c.contributorName,
+                }))}
+                onChange={(val) => {
+                  setToId(val ? Number(val) : '');
                   setErrorMsg(null);
                 }}
-                className="w-full h-[50px] px-3.5 pr-10 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary text-[15px] appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-textPrimary"
-              >
-                <option value="">Select recipient</option>
-                {sortedContributors.map((c) => (
-                  <option key={c.contributorID} value={c.contributorID}>
-                    {c.contributorName}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-textHint absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              />
             </div>
+
+            {errorMsg && (
+              <p className="text-xs font-semibold text-giveText leading-relaxed pt-1">
+                {errorMsg}
+              </p>
+            )}
           </div>
 
-          {errorMsg && (
-            <p className="text-xs font-semibold text-giveText leading-relaxed pt-1">
-              {errorMsg}
-            </p>
-          )}
-
-          {/* Bottom Action Buttons */}
-          <div className="pt-3 flex gap-3">
+          {/* Bottom Action Buttons pinned at bottom of card */}
+          <div className="shrink-0 pt-3 flex gap-3">
             <button
               type="button"
               onClick={onClose}

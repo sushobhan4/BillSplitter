@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, RefreshCw, Users } from 'lucide-react';
 import type { SheetWithContributorsAndItems } from '../types/models';
+import { useMorphPresence } from '../hooks/useMorphPresence';
 
 interface CloneOptionsDialogProps {
   isOpen: boolean;
@@ -15,15 +16,28 @@ export const CloneOptionsDialog: React.FC<CloneOptionsDialogProps> = ({
   onSelectOption,
   onClose,
 }) => {
-  if (!isOpen || !sourceSheet) return null;
+  const { shouldRender, isClosing } = useMorphPresence(isOpen && Boolean(sourceSheet), 180);
+
+  if (!shouldRender || !sourceSheet) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-backdrop-in"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto ${
+        isClosing ? 'animate-backdrop-out' : 'animate-backdrop-in'
+      }`}
+      style={{
+        height: 'var(--app-height, 100dvh)',
+        maxHeight: 'var(--app-height, 100dvh)',
+      }}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke animate-dialog-morph-enter my-auto"
+        className={`w-full max-w-sm rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke m-auto ${
+          isClosing ? 'animate-dialog-morph-exit' : 'animate-dialog-morph-enter'
+        }`}
+        style={{
+          maxHeight: 'calc(var(--app-height, 100dvh) - 24px)',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-3 border-b border-cardStroke">

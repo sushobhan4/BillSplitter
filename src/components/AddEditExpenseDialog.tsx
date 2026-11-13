@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown } from 'lucide-react';
 import type { Contributor, ItemWithPayerAndConsumers, ItemConsumer } from '../types/models';
 import { ITEM_TYPE } from '../types/models';
 import { dbClient } from '../db/dbClient';
 import { MaterialSwitch } from './MaterialSwitch';
+import { useMorphPresence } from '../hooks/useMorphPresence';
+import { CustomSelect } from './CustomSelect';
 
 interface AddEditExpenseDialogProps {
   isOpen: boolean;
@@ -42,6 +43,8 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
 
   const isUpdatingProgrammatically = useRef(false);
   const manualEntries = useRef<Record<number, boolean>>({});
+
+  const { shouldRender, isClosing } = useMorphPresence(isOpen, 180);
 
   // Initialize form state
   useEffect(() => {
@@ -98,8 +101,6 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
       setWarningMsg(null);
     }
   }, [isOpen, itemToEdit]);
-
-  if (!isOpen) return null;
 
   const totalAmount = parseFloat(totalAmountStr) || 0.0;
   const checkedList = sortedContributors.filter((c) => checkedIds.has(c.contributorID));
@@ -167,11 +168,14 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
     setWarningMsg(null);
   };
 
-  // Main custom split auto-balancing algorithm ported from SheetViewActivity.kt
+  // Main custom split auto-balancing algorithm (exact 1:1 match with Android SheetViewActivity.kt distributeAmounts)
   const distributeAmounts = (
     sourceId: number,
     sourceAmount: number,
-    currentAmounts: Record<number, string>
+    sourceValStr: string,
+    isAmountSource: boolean,
+    currentAmts: Record<number, string>,
+    currentPercs: Record<number, string>
   ) => {
     if (totalAmount <= 0.001) return;
 
@@ -181,7 +185,7 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
     let lockedIds = checkedArr.filter((id) => manualEntries.current[id]);
     let floatingIds = checkedArr.filter((id) => !manualEntries.current[id]);
 
-    // If all are locked, unlock everyone else except current source
+    // NEW LOGIC from Android: If ALL are locked, unlock everyone else except current source (the new Anchor)
     if (floatingIds.length === 0 && checkedArr.length > 1) {
       checkedArr.forEach((id) => {
         if (id !== sourceId) {
@@ -195,16 +199,25 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
     // Sum locked rows
     let sumLocked = 0;
     lockedIds.forEach((id) => {
-      const val = id === sourceId ? sourceAmount : parseFloat(currentAmounts[id] || '0') || 0;
+      const val = id === sourceId ? sourceAmount : parseFloat(currentAmts[id] || '0') || 0;
       sumLocked += val;
     });
 
     const remaining = totalAmount - sumLocked;
-    const updatedAmts = { ...currentAmounts, [sourceId]: sourceAmount.toFixed(2) };
-    const updatedPercs = {
-      ...rowPercentages,
-      [sourceId]: ((sourceAmount / totalAmount) * 100).toFixed(2),
-    };
+
+    // Build next amounts & percentages maps
+    const updatedAmts: Record<number, string> = { ...currentAmts };
+    const updatedPercs: Record<number, string> = { ...currentPercs };
+
+    // For the source row: keep EXACT typed string without prematurely formatting to .toFixed(2)
+    if (isAmountSource) {
+      updatedAmts[sourceId] = sourceValStr;
+      const perc = totalAmount > 0 ? (sourceAmount / totalAmount) * 100.0 : 0;
+      updatedPercs[sourceId] = perc.toFixed(2);
+    } else {
+      updatedPercs[sourceId] = sourceValStr;
+      updatedAmts[sourceId] = sourceAmount.toFixed(2);
+    }
 
     if (floatingIds.length > 0) {
       let amountPerFloating = remaining / floatingIds.length;
@@ -212,7 +225,8 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
 
       floatingIds.forEach((id) => {
         updatedAmts[id] = amountPerFloating.toFixed(2);
-        updatedPercs[id] = ((amountPerFloating / totalAmount) * 100).toFixed(2);
+        const perc = totalAmount > 0 ? (amountPerFloating / totalAmount) * 100.0 : 0;
+        updatedPercs[id] = perc.toFixed(2);
       });
     }
 
@@ -235,7 +249,8 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
         if (newVal < 0) newVal = 0;
 
         updatedAmts[targetId] = newVal.toFixed(2);
-        updatedPercs[targetId] = ((newVal / totalAmount) * 100).toFixed(2);
+        const newPerc = totalAmount > 0 ? (newVal / totalAmount) * 100.0 : 0;
+        updatedPercs[targetId] = newPerc.toFixed(2);
       }
     }
 
@@ -247,15 +262,29 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
     if (isUpdatingProgrammatically.current) return;
     const perc = parseFloat(valStr) || 0;
     const amt = totalAmount * (perc / 100.0);
-    const updatedPercs = { ...rowPercentages, [id]: valStr };
-    setRowPercentages(updatedPercs);
-    distributeAmounts(id, amt, rowAmounts);
+    distributeAmounts(id, amt, valStr, false, rowAmounts, rowPercentages);
   };
 
   const handleRowAmountChange = (id: number, valStr: string) => {
     if (isUpdatingProgrammatically.current) return;
     const amt = parseFloat(valStr) || 0;
-    distributeAmounts(id, amt, { ...rowAmounts, [id]: valStr });
+    distributeAmounts(id, amt, valStr, true, rowAmounts, rowPercentages);
+  };
+
+  const handleRowAmountBlur = (id: number) => {
+    const raw = rowAmounts[id];
+    if (raw !== undefined && raw !== '') {
+      const val = parseFloat(raw) || 0;
+      setRowAmounts((prev) => ({ ...prev, [id]: val.toFixed(2) }));
+    }
+  };
+
+  const handleRowPercentageBlur = (id: number) => {
+    const raw = rowPercentages[id];
+    if (raw !== undefined && raw !== '') {
+      const val = parseFloat(raw) || 0;
+      setRowPercentages((prev) => ({ ...prev, [id]: val.toFixed(2) }));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -305,6 +334,8 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
     onClose();
   };
 
+  if (!shouldRender) return null;
+
   const dialogTitle =
     itemToEdit?.item.itemType === ITEM_TYPE.TYPE_CARRYOVER
       ? 'Edit Carried Balance'
@@ -314,20 +345,32 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-backdrop-in overflow-y-auto"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto ${
+        isClosing ? 'animate-backdrop-out' : 'animate-backdrop-in'
+      }`}
+      style={{
+        height: 'var(--app-height, 100dvh)',
+        maxHeight: 'var(--app-height, 100dvh)',
+      }}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[420px] max-h-[92vh] flex flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke animate-dialog-morph-enter my-auto"
+        className={`w-full max-w-[420px] flex flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke m-auto ${
+          isClosing ? 'animate-dialog-morph-exit' : 'animate-dialog-morph-enter'
+        }`}
+        style={{
+          maxHeight: 'calc(var(--app-height, 100dvh) - 24px)',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Android Title: Centered 19sp bold */}
-        <h2 className="text-[19px] font-bold text-center text-textPrimary tracking-tight">
+        <h2 className="text-[19px] font-bold text-center text-textPrimary tracking-tight shrink-0">
           {dialogTitle}
         </h2>
 
         {/* Scrollable Form Content */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto mt-2 pr-0.5 space-y-3.5">
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden mt-2">
+          <div className="flex-1 overflow-y-auto px-1 py-1 space-y-3.5">
           {/* Amount Section matching Android et_amount */}
           <div className="flex flex-col items-center pt-2">
             <span className="text-[11px] font-bold tracking-[0.12em] text-textHint uppercase">
@@ -344,7 +387,7 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
                   setWarningMsg(null);
                 }}
                 placeholder="0.00"
-                className="w-full text-center text-[40px] font-bold bg-transparent text-textPrimary placeholder:text-textHint outline-none border-none py-1 leading-none tracking-tight"
+                className="w-full text-center text-[40px] font-bold bg-transparent text-textPrimary placeholder:text-textHint outline-none border-none py-1 leading-none tracking-tight focus:outline-none focus:ring-0"
                 autoFocus={!itemToEdit}
               />
             </div>
@@ -360,28 +403,24 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
                 setWarningMsg(null);
               }}
               placeholder="Expense description"
-              className="w-full h-[50px] px-3.5 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary placeholder:text-textHint text-[15px] focus:outline-none focus:ring-1 focus:ring-textPrimary"
+              className="w-full h-[50px] px-3.5 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary placeholder:text-textHint text-[15px] focus:outline-none focus:border-textPrimary focus:ring-0 transition-colors"
             />
           </div>
 
-          {/* Payer Spinner matching spinner_payer */}
-          <div className="relative">
-            <select
+          {/* Payer Custom Select matching Android theme */}
+          <div>
+            <CustomSelect
               value={payerId}
-              onChange={(e) => {
-                setPayerId(e.target.value ? Number(e.target.value) : '');
+              placeholder="Paid By"
+              options={sortedContributors.map((c) => ({
+                value: c.contributorID,
+                label: c.contributorName,
+              }))}
+              onChange={(val) => {
+                setPayerId(val ? Number(val) : '');
                 setWarningMsg(null);
               }}
-              className="w-full h-[50px] px-3.5 pr-10 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary text-[15px] appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-textPrimary"
-            >
-              <option value="">Paid By</option>
-              {sortedContributors.map((c) => (
-                <option key={c.contributorID} value={c.contributorID}>
-                  {c.contributorName}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="w-4 h-4 text-textHint absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            />
           </div>
 
           {/* Notes Input matching et_notes */}
@@ -391,7 +430,7 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add a note (optional)..."
               rows={2}
-              className="w-full min-h-[64px] p-3.5 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary placeholder:text-textHint text-sm resize-none focus:outline-none focus:ring-1 focus:ring-textPrimary leading-normal"
+              className="w-full min-h-[64px] p-3.5 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary placeholder:text-textHint text-sm resize-none focus:outline-none focus:border-textPrimary focus:ring-0 leading-normal transition-colors"
             />
           </div>
 
@@ -462,8 +501,14 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
                             onChange={(e) =>
                               handlePercentageChange(c.contributorID, e.target.value)
                             }
+                            onFocus={(e) => {
+                              e.target.select();
+                              e.target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                            }}
+                            onClick={(e) => (e.target as HTMLInputElement).select()}
+                            onBlur={() => handleRowPercentageBlur(c.contributorID)}
                             placeholder="%"
-                            className="w-[70px] h-[32px] px-1 rounded-lg bg-surface border border-cardStroke text-center text-xs font-bold text-textPrimary placeholder:text-textHint focus:outline-none focus:border-textPrimary"
+                            className="w-[70px] h-[32px] px-1 rounded-lg bg-surface border border-cardStroke text-center text-xs font-bold text-textPrimary placeholder:text-textHint focus:outline-none focus:border-textPrimary focus:ring-0"
                           />
 
                           {/* Amount Input matching et_amount */}
@@ -474,8 +519,14 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
                             onChange={(e) =>
                               handleRowAmountChange(c.contributorID, e.target.value)
                             }
+                            onFocus={(e) => {
+                              e.target.select();
+                              e.target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                            }}
+                            onClick={(e) => (e.target as HTMLInputElement).select()}
+                            onBlur={() => handleRowAmountBlur(c.contributorID)}
                             placeholder="amount"
-                            className="w-[84px] h-[32px] px-1 rounded-lg bg-surface border border-cardStroke text-center text-xs font-bold text-textPrimary placeholder:text-textHint focus:outline-none focus:border-textPrimary"
+                            className="w-[84px] h-[32px] px-1 rounded-lg bg-surface border border-cardStroke text-center text-xs font-bold text-textPrimary placeholder:text-textHint focus:outline-none focus:border-textPrimary focus:ring-0"
                           />
                         </div>
                       )}
@@ -491,9 +542,10 @@ export const AddEditExpenseDialog: React.FC<AddEditExpenseDialogProps> = ({
               {warningMsg}
             </p>
           )}
+          </div>
 
-          {/* Bottom Action Buttons matching expenseActionButtons */}
-          <div className="pt-2 flex gap-3">
+          {/* Bottom Action Buttons matching expenseActionButtons pinned at bottom of card */}
+          <div className="shrink-0 pt-3 flex gap-3">
             <button
               type="button"
               onClick={onClose}

@@ -32,7 +32,7 @@ export default defineConfig({
         ],
         file_handlers: [
           {
-            action: '/',
+            action: '/BillSplitter/',
             accept: {
               'application/octet-stream': ['.bsplit']
             }

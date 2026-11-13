@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, Trash2 } from 'lucide-react';
 import type { SheetWithContributorsAndItems } from '../types/models';
 import { ConfirmDialog } from './ConfirmDialog';
 import { formatCurrency } from '../utils/formatters';
+import { useMorphPresence } from '../hooks/useMorphPresence';
 
 interface ContributorRow {
   tempId: number;
@@ -35,13 +36,23 @@ export const AddEditSheetDialog: React.FC<AddEditSheetDialogProps> = ({
   const nextIdRef = useRef(-1);
 
   const getInitialRows = (): ContributorRow[] => {
+    nextIdRef.current = -1;
     if (itemToEdit) {
-      return itemToEdit.contributors.map((c) => ({
+      const editRows = itemToEdit.contributors.map((c) => ({
         tempId: c.contributorID,
         originalId: c.contributorID,
         name: c.contributorName,
         carryoverBalance: 0,
       }));
+      while (editRows.length < 2) {
+        editRows.push({
+          tempId: nextIdRef.current--,
+          originalId: 0,
+          name: '',
+          carryoverBalance: 0,
+        });
+      }
+      return editRows;
     }
 
     if (cloneSource) {
@@ -103,7 +114,20 @@ export const AddEditSheetDialog: React.FC<AddEditSheetDialogProps> = ({
     message: string;
   } | null>(null);
 
-  if (!isOpen) return null;
+  const { shouldRender, isClosing } = useMorphPresence(isOpen, 180);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setSheetName(itemToEdit?.sheet.sheetName || cloneSource?.sheet.sheetName || '');
+    setSheetNotes(itemToEdit?.sheet.notes || cloneSource?.sheet.notes || '');
+    setRows(getInitialRows());
+    setErrorMsg(null);
+    setPendingDeleteRow(null);
+    setDeleteConfirmInfo(null);
+  }, [isOpen, itemToEdit, cloneSource, carryoverBalances]);
+
+  if (!shouldRender) return null;
 
   const isEditing = Boolean(itemToEdit);
 
@@ -201,15 +225,26 @@ export const AddEditSheetDialog: React.FC<AddEditSheetDialogProps> = ({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-backdrop-in overflow-y-auto"
+        className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto ${
+          isClosing ? 'animate-backdrop-out' : 'animate-backdrop-in'
+        }`}
+        style={{
+          height: 'var(--app-height, 100dvh)',
+          maxHeight: 'var(--app-height, 100dvh)',
+        }}
         onClick={onClose}
       >
         <div
-          className="w-full max-w-[420px] max-h-[92vh] flex flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke animate-dialog-morph-enter my-auto"
+          className={`w-full max-w-[420px] flex flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke m-auto ${
+            isClosing ? 'animate-dialog-morph-exit' : 'animate-dialog-morph-enter'
+          }`}
+          style={{
+            maxHeight: 'calc(var(--app-height, 100dvh) - 24px)',
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header matching add_sheet.xml */}
-          <div className="flex items-center justify-between pb-3">
+          <div className="flex items-center justify-between pb-3 shrink-0">
             <h2 className="text-[20px] font-bold text-textPrimary tracking-tight">
               {isEditing ? 'Edit Sheet' : 'Create Sheet'}
             </h2>
@@ -223,84 +258,89 @@ export const AddEditSheetDialog: React.FC<AddEditSheetDialogProps> = ({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto mt-1 pr-0.5 space-y-3.5">
-            <div>
-              <input
-                type="text"
-                value={sheetName}
-                onChange={(e) => {
-                  setSheetName(e.target.value);
-                  setErrorMsg(null);
-                }}
-                placeholder="Sheet Name"
-                className="w-full h-[52px] px-3.5 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary placeholder:text-textHint text-base focus:outline-none focus:ring-1 focus:ring-textPrimary"
-                autoFocus={!isEditing}
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden mt-1">
+            <div className="flex-1 overflow-y-auto px-1 py-1 space-y-3.5">
+              <div>
+                <input
+                  type="text"
+                  value={sheetName}
+                  onChange={(e) => {
+                    setSheetName(e.target.value);
+                    setErrorMsg(null);
+                  }}
+                  onFocus={(e) => e.target.scrollIntoView({ block: 'nearest', behavior: 'smooth' })}
+                  placeholder="Sheet Name"
+                  className="w-full h-[52px] px-3.5 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary placeholder:text-textHint text-base focus:outline-none focus:border-textPrimary focus:ring-0 transition-colors"
+                  autoFocus={!isEditing}
+                />
+              </div>
 
-            <div>
-              <textarea
-                value={sheetNotes}
-                onChange={(e) => setSheetNotes(e.target.value)}
-                placeholder="Description (Optional)"
-                rows={2}
-                className="w-full min-h-[64px] p-3.5 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary placeholder:text-textHint text-sm resize-none focus:outline-none focus:ring-1 focus:ring-textPrimary leading-normal"
-              />
-            </div>
+              <div>
+                <textarea
+                  value={sheetNotes}
+                  onChange={(e) => setSheetNotes(e.target.value)}
+                  onFocus={(e) => e.target.scrollIntoView({ block: 'nearest', behavior: 'smooth' })}
+                  placeholder="Description (Optional)"
+                  rows={2}
+                  className="w-full min-h-[64px] p-3.5 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary placeholder:text-textHint text-sm resize-none focus:outline-none focus:border-textPrimary focus:ring-0 leading-normal transition-colors"
+                />
+              </div>
 
-            {/* Contributors Section */}
-            <div>
-              <span className="text-[11px] font-bold tracking-[0.12em] text-textHint uppercase block mb-2">
-                CONTRIBUTORS
-              </span>
+              {/* Contributors Section */}
+              <div>
+                <span className="text-[11px] font-bold tracking-[0.12em] text-textHint uppercase block mb-2">
+                  CONTRIBUTORS
+                </span>
 
-              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-0.5">
-                {rows.map((row) => (
-                  <div key={row.tempId} className="flex items-center gap-2">
-                    <div className="flex-1 flex items-center h-[48px] px-3.5 rounded-xl bg-surfaceAlt border border-cardStroke focus-within:ring-1 focus-within:ring-textPrimary">
-                      <input
-                        type="text"
-                        value={row.name}
-                        onChange={(e) => handleRowNameChange(row.tempId, e.target.value)}
-                        placeholder={`Name`}
-                        className="flex-1 bg-transparent text-textPrimary placeholder:text-textHint text-[15px] focus:outline-none min-w-0"
-                      />
-                      {Math.abs(row.carryoverBalance) >= 0.005 && (
-                        <span
-                          className={`shrink-0 ml-2 text-xs font-bold ${
-                            row.carryoverBalance > 0 ? 'text-receiveText' : 'text-giveText'
-                          }`}
+                <div className="space-y-2 max-h-[180px] overflow-y-auto px-0.5 py-0.5">
+                  {rows.map((row) => (
+                    <div key={row.tempId} className="flex items-center gap-2">
+                      <div className="flex-1 flex items-center h-[48px] px-3.5 rounded-xl bg-surfaceAlt border border-cardStroke focus-within:border-textPrimary focus-within:ring-0 transition-colors">
+                        <input
+                          type="text"
+                          value={row.name}
+                          onChange={(e) => handleRowNameChange(row.tempId, e.target.value)}
+                          onFocus={(e) => e.target.scrollIntoView({ block: 'nearest', behavior: 'smooth' })}
+                          placeholder={`Name`}
+                          className="flex-1 bg-transparent text-textPrimary placeholder:text-textHint text-[15px] focus:outline-none focus:ring-0 min-w-0"
+                        />
+                        {Math.abs(row.carryoverBalance) >= 0.005 && (
+                          <span
+                            className={`shrink-0 ml-2 text-xs font-bold ${
+                              row.carryoverBalance > 0 ? 'text-receiveText' : 'text-giveText'
+                            }`}
+                          >
+                            {row.carryoverBalance > 0 ? '+' : ''}
+                            {formatCurrency(row.carryoverBalance)}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Delete button (red trash) matching item_contributor.xml */}
+                      {rows.length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => requestRemoveRow(row)}
+                          className="w-10 h-10 rounded-xl flex items-center justify-center text-giveText hover:bg-giveText/10 transition-colors shrink-0"
+                          title="Delete Contributor"
                         >
-                          {row.carryoverBalance > 0 ? '+' : ''}
-                          {formatCurrency(row.carryoverBalance)}
-                        </span>
+                          <Trash2 className="w-5 h-5" />
+                        </button>
                       )}
                     </div>
-
-                    {/* Delete button (red trash) matching item_contributor.xml */}
-                    {rows.length > 2 && (
-                      <button
-                        type="button"
-                        onClick={() => requestRemoveRow(row)}
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-giveText hover:bg-giveText/10 transition-colors shrink-0"
-                        title="Delete Contributor"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
+
+              {errorMsg && (
+                <p className="text-xs font-semibold text-giveText leading-relaxed pt-1">
+                  {errorMsg}
+                </p>
+              )}
             </div>
 
-            {errorMsg && (
-              <p className="text-xs font-semibold text-giveText leading-relaxed pt-1">
-                {errorMsg}
-              </p>
-            )}
-
-            {/* Bottom Buttons matching layoutButtons in add_sheet.xml */}
-            <div className="pt-3 flex gap-3">
+            {/* Bottom Buttons matching layoutButtons in add_sheet.xml pinned at bottom of card */}
+            <div className="shrink-0 pt-3 flex gap-3">
               <button
                 type="button"
                 onClick={handleAddRow}

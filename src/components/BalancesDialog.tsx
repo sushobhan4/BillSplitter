@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { X } from 'lucide-react';
 import { BalanceCalculator, roundToPlaces } from '../utils/BalanceCalculator';
 import { formatCurrency } from '../utils/formatters';
+import { useMorphPresence } from '../hooks/useMorphPresence';
 
 interface BalancesDialogProps {
   isOpen: boolean;
@@ -41,7 +42,9 @@ export const BalancesDialog: React.FC<BalancesDialogProps> = ({
     return BalanceCalculator.generateSettlementTransfers(currentBalances);
   }, [currentBalances]);
 
-  if (!isOpen) return null;
+  const { shouldRender, isClosing } = useMorphPresence(isOpen, 180);
+
+  if (!shouldRender) return null;
 
   const handleMarkAsPaidFromBalances = (debtorName: string, amountOwed: number) => {
     if (isReadOnly || isSubmitting) return;
@@ -85,11 +88,22 @@ export const BalancesDialog: React.FC<BalancesDialogProps> = ({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-backdrop-in overflow-y-auto"
+        className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto ${
+          isClosing ? 'animate-backdrop-out' : 'animate-backdrop-in'
+        }`}
+        style={{
+          height: 'var(--app-height, 100dvh)',
+          maxHeight: 'var(--app-height, 100dvh)',
+        }}
         onClick={onClose}
       >
         <div
-          className="w-full max-w-[420px] max-h-[92vh] flex flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke animate-dialog-morph-enter my-auto"
+          className={`w-full max-w-[420px] flex flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke m-auto ${
+            isClosing ? 'animate-dialog-morph-exit' : 'animate-dialog-morph-enter'
+          }`}
+          style={{
+            maxHeight: 'calc(var(--app-height, 100dvh) - 24px)',
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header matching dialog_balances.xml */}
@@ -98,6 +112,7 @@ export const BalancesDialog: React.FC<BalancesDialogProps> = ({
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close balances"
               className="w-8 h-8 rounded-full flex items-center justify-center text-textHint hover:text-textPrimary transition-colors"
             >
               <X className="w-5 h-5" />

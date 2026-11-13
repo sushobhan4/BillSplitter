@@ -25,10 +25,129 @@ import { CloneOptionsDialog } from '../components/CloneOptionsDialog';
 import { ExportSheetDialog } from '../components/ExportSheetDialog';
 import { SheetDetailsDialog } from '../components/SheetDetailsDialog';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useMorphPresence } from '../hooks/useMorphPresence';
 
 interface HomePageProps {
   onOpenSheet: (sheetId: number) => void;
 }
+
+const SheetCardMenu: React.FC<{
+  isOpen: boolean;
+  item: SheetWithContributorsAndItems;
+  onEdit: () => void;
+  onExport: () => void;
+  onClone: () => void;
+  onDetails: () => void;
+  onDelete: () => void;
+}> = ({ isOpen, item, onEdit, onExport, onClone, onDetails, onDelete }) => {
+  const { shouldRender, isClosing } = useMorphPresence(isOpen, 150);
+  if (!shouldRender) return null;
+
+  return (
+    <div
+      className={`absolute right-0 top-8 z-30 w-44 rounded-2xl bg-surface py-1.5 shadow-xl border border-cardStroke origin-top-right ${
+        isClosing ? 'animate-popup-morph-exit' : 'animate-popup-morph-enter'
+      }`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {!item.sheet.isReadOnly && (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
+        >
+          <Pencil className="w-4 h-4 text-textSecondary" />
+          <span>Edit</span>
+        </button>
+      )}
+
+      {!item.sheet.isReadOnly && <div className="border-t border-cardStroke" />}
+
+      <button
+        type="button"
+        onClick={onExport}
+        className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
+      >
+        <Share2 className="w-4 h-4 text-textSecondary" />
+        <span>Export</span>
+      </button>
+
+      {!item.sheet.isReadOnly && (
+        <>
+          <div className="border-t border-cardStroke" />
+          <button
+            type="button"
+            onClick={onClone}
+            className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
+          >
+            <Copy className="w-4 h-4 text-textSecondary" />
+            <span>Clone</span>
+          </button>
+        </>
+      )}
+
+      <div className="border-t border-cardStroke" />
+
+      <button
+        type="button"
+        onClick={onDetails}
+        className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
+      >
+        <Info className="w-4 h-4 text-textSecondary" />
+        <span>Details</span>
+      </button>
+
+      <div className="border-t border-cardStroke" />
+
+      <button
+        type="button"
+        onClick={onDelete}
+        className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-giveText hover:bg-giveText/10 flex items-center gap-3 transition-colors"
+      >
+        <Trash2 className="w-4 h-4 text-giveText" />
+        <span>Delete</span>
+      </button>
+    </div>
+  );
+};
+
+const FabMenu: React.FC<{
+  isOpen: boolean;
+  onNewSheet: () => void;
+  onImportSheet: () => void;
+}> = ({ isOpen, onNewSheet, onImportSheet }) => {
+  const { shouldRender, isClosing } = useMorphPresence(isOpen, 150);
+  if (!shouldRender) return null;
+
+  return (
+    <div
+      className={`absolute bottom-16 right-0 w-52 rounded-2xl bg-surface py-1.5 shadow-2xl border border-cardStroke origin-bottom-right mb-2 ${
+        isClosing ? 'animate-popup-morph-exit' : 'animate-popup-morph-enter'
+      }`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        onClick={onNewSheet}
+        className="w-full text-left px-4 py-3 text-sm font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
+      >
+        <Plus className="w-4 h-4 text-textSecondary" />
+        <span>New Sheet</span>
+      </button>
+
+      <div className="border-t border-cardStroke" />
+
+      <button
+        type="button"
+        onClick={onImportSheet}
+        className="w-full text-left px-4 py-3 text-sm font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
+      >
+        <FileUp className="w-4 h-4 text-textSecondary" />
+        <span>Import Sheet (.bsplit)</span>
+      </button>
+    </div>
+  );
+};
 
 export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
   const { sheets, loading } = useSheets();
@@ -214,7 +333,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
 
   return (
     <div
-      className="min-h-screen max-w-xl mx-auto flex flex-col px-4 pt-4 pb-28 relative select-none animate-activity-morph-enter"
+      className="h-full max-h-dvh max-w-xl w-full mx-auto flex flex-col overflow-hidden relative select-none animate-activity-morph-enter"
       onClick={() => {
         setIsFabMenuOpen(false);
         setActiveMenuSheetId(null);
@@ -233,51 +352,53 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
         }}
       />
 
-      {/* Top Header matching activity_main.xml */}
-      <header className="flex items-center justify-between pt-2 pb-3 px-1">
-        <h1 className="text-[34px] font-bold tracking-tight text-textPrimary leading-none">
-          Bill Sheets
-        </h1>
-        {sheets.length >= 2 && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsSortOpen(true);
-            }}
-            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surfaceAlt text-iconTint active:scale-95 transition-all"
-            title="Sort sheets"
-          >
-            <ArrowUpDown className="w-5 h-5 stroke-[2]" />
-          </button>
-        )}
-      </header>
-
-      {/* Search Bar matching searchSheetsContainer in activity_main.xml */}
-      <div className="relative mb-3.5">
-        <div className="flex items-center h-[46px] px-3.5 rounded-2xl bg-surface border border-cardStroke shadow-sm">
-          <Search className="w-4 h-4 text-textHint shrink-0" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search sheets or people..."
-            className="w-full ml-2.5 bg-transparent text-sm text-textPrimary placeholder:text-textHint focus:outline-none"
-          />
-          {searchQuery && (
+      {/* Top Header & Search Bar matching activity_main.xml (pinned top area) */}
+      <div className="shrink-0 px-4 pt-4 pb-2 z-10 bg-gradient-to-b from-bgStart via-bgStart to-transparent">
+        <header className="flex items-center justify-between pb-3 px-1">
+          <h1 className="text-[34px] font-bold tracking-tight text-textPrimary leading-none">
+            Bill Sheets
+          </h1>
+          {sheets.length >= 2 && (
             <button
               type="button"
-              onClick={() => setSearchQuery('')}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-textHint hover:text-textPrimary shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsSortOpen(true);
+              }}
+              className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surfaceAlt text-iconTint active:scale-95 transition-all"
+              title="Sort sheets"
             >
-              <X className="w-4 h-4" />
+              <ArrowUpDown className="w-5 h-5 stroke-[2]" />
             </button>
           )}
+        </header>
+
+        {/* Search Bar matching searchSheetsContainer in activity_main.xml */}
+        <div className="relative">
+          <div className="flex items-center h-[46px] px-3.5 rounded-2xl bg-surface border border-cardStroke shadow-sm focus-within:border-textPrimary transition-colors">
+            <Search className="w-4 h-4 text-textHint shrink-0" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search sheets or people..."
+              className="w-full ml-2.5 bg-transparent text-sm text-textPrimary placeholder:text-textHint focus:outline-none focus:ring-0"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-textHint hover:text-textPrimary shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Sheet List matching sheet_card.xml in Android */}
-      <main className="flex-1 space-y-3">
+      {/* Sheet List matching recyclerView in activity_main.xml */}
+      <main className="flex-1 overflow-y-auto px-4 pt-1 pb-28 space-y-3 overscroll-contain">
         {loading ? (
           <div className="py-20 text-center text-sm font-medium text-textHint">
             Loading sheets...
@@ -345,87 +466,32 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
                       <MoreVertical className="w-5 h-5" />
                     </button>
 
-                    {/* 3-dot Overflow Dropdown matching popup_layout.xml */}
-                    {isMenuOpen && (
-                      <div
-                        className="absolute right-0 top-8 z-30 w-44 rounded-2xl bg-surface py-1.5 shadow-xl border border-cardStroke animate-popup-morph-enter origin-top-right"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {!sheet.isReadOnly && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveMenuSheetId(null);
-                              setEditingSheet(item);
-                              setIsAddSheetOpen(true);
-                            }}
-                            className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
-                          >
-                            <Pencil className="w-4 h-4 text-textSecondary" />
-                            <span>Edit</span>
-                          </button>
-                        )}
-
-                        {!sheet.isReadOnly && <div className="border-t border-cardStroke" />}
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveMenuSheetId(null);
-                            setExportingSheet(item);
-                          }}
-                          className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
-                        >
-                          <Share2 className="w-4 h-4 text-textSecondary" />
-                          <span>Export</span>
-                        </button>
-
-                        {!sheet.isReadOnly && (
-                          <>
-                            <div className="border-t border-cardStroke" />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveMenuSheetId(null);
-                                setCloningSheet(item);
-                              }}
-                              className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
-                            >
-                              <Copy className="w-4 h-4 text-textSecondary" />
-                              <span>Clone</span>
-                            </button>
-                          </>
-                        )}
-
-                        <div className="border-t border-cardStroke" />
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveMenuSheetId(null);
-                            setDetailsSheet(item);
-                          }}
-                          className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
-                        >
-                          <Info className="w-4 h-4 text-textSecondary" />
-                          <span>Details</span>
-                        </button>
-
-                        <div className="border-t border-cardStroke" />
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveMenuSheetId(null);
-                            setDeletingSheet(item);
-                          }}
-                          className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-giveText hover:bg-giveText/10 flex items-center gap-3 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4 text-giveText" />
-                          <span>Delete</span>
-                        </button>
-                      </div>
-                    )}
+                    {/* 3-dot Overflow Dropdown with morph enter & exit */}
+                    <SheetCardMenu
+                      isOpen={isMenuOpen}
+                      item={item}
+                      onEdit={() => {
+                        setActiveMenuSheetId(null);
+                        setEditingSheet(item);
+                        setIsAddSheetOpen(true);
+                      }}
+                      onExport={() => {
+                        setActiveMenuSheetId(null);
+                        setExportingSheet(item);
+                      }}
+                      onClone={() => {
+                        setActiveMenuSheetId(null);
+                        setCloningSheet(item);
+                      }}
+                      onDetails={() => {
+                        setActiveMenuSheetId(null);
+                        setDetailsSheet(item);
+                      }}
+                      onDelete={() => {
+                        setActiveMenuSheetId(null);
+                        setDeletingSheet(item);
+                      }}
+                    />
                   </div>
                 </div>
 
@@ -453,44 +519,23 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenSheet }) => {
       </main>
 
       {/* Bottom Floating Action Button matching FloatingActionButton in activity_main.xml */}
-      <div className="fixed bottom-6 right-6 z-40">
+      <div className="absolute bottom-6 right-5 z-40">
         <div className="relative">
-          {/* FAB Popover Menu matching popup_add_sheet.xml */}
-          {isFabMenuOpen && (
-            <div
-              className="absolute bottom-16 right-0 w-52 rounded-2xl bg-surface py-1.5 shadow-2xl border border-cardStroke animate-popup-morph-enter origin-bottom-right mb-2"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setIsFabMenuOpen(false);
-                  setEditingSheet(null);
-                  setCloningSheet(null);
-                  setCarryoverBalances(null);
-                  setIsAddSheetOpen(true);
-                }}
-                className="w-full text-left px-4 py-3 text-sm font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
-              >
-                <Plus className="w-4 h-4 text-textSecondary" />
-                <span>New Sheet</span>
-              </button>
-
-              <div className="border-t border-cardStroke" />
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsFabMenuOpen(false);
-                  fileInputRef.current?.click();
-                }}
-                className="w-full text-left px-4 py-3 text-sm font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
-              >
-                <FileUp className="w-4 h-4 text-textSecondary" />
-                <span>Import Sheet (.bsplit)</span>
-              </button>
-            </div>
-          )}
+          {/* FAB Popover Menu with morph enter & exit */}
+          <FabMenu
+            isOpen={isFabMenuOpen}
+            onNewSheet={() => {
+              setIsFabMenuOpen(false);
+              setEditingSheet(null);
+              setCloningSheet(null);
+              setCarryoverBalances(null);
+              setIsAddSheetOpen(true);
+            }}
+            onImportSheet={() => {
+              setIsFabMenuOpen(false);
+              fileInputRef.current?.click();
+            }}
+          />
 
           <button
             type="button"

@@ -83,10 +83,19 @@
   --color-carry-accent: #60A5FA;
 }
 
-body {
+html, body {
+  height: 100%;
+  height: var(--app-height, 100dvh);
   margin: 0;
-  min-height: 100vh;
-  min-height: 100dvh;
+  padding: 0;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+}
+
+body {
   background: linear-gradient(180deg, var(--color-bg-start) 0%, var(--color-bg-end) 100%);
   color: var(--color-text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -95,6 +104,15 @@ body {
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
   -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  height: 100%;
+  height: var(--app-height, 100dvh);
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Universal number input spinner suppression (prevents text clipping) */
@@ -108,43 +126,81 @@ input[type="number"] {
   appearance: textfield;
 }
 
-/* Input text rendering & box model */
+/* Input text rendering, box model, and outline suppression */
 input, textarea, select {
   font-family: inherit;
   box-sizing: border-box;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none !important;
 }
 
 /* Android Morph Animations (1:1 with UiSizing.kt & anim/*.xml) */
 @keyframes dialogMorphEnter {
   0% {
     opacity: 0;
-    transform: scale(0.90);
+    transform: scale(0.85) translateY(14px);
   }
   100% {
     opacity: 1;
-    transform: scale(1.0);
+    transform: scale(1.0) translateY(0);
+  }
+}
+
+@keyframes dialogMorphExit {
+  0% {
+    opacity: 1;
+    transform: scale(1.0) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.88) translateY(10px);
   }
 }
 
 @keyframes popupMorphEnter {
   0% {
     opacity: 0;
-    transform: scale(0.88);
+    transform: scale(0.85) translateY(6px);
   }
   100% {
     opacity: 1;
-    transform: scale(1.0);
+    transform: scale(1.0) translateY(0);
+  }
+}
+
+@keyframes popupMorphExit {
+  0% {
+    opacity: 1;
+    transform: scale(1.0) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.88) translateY(4px);
   }
 }
 
 @keyframes activityMorphEnter {
   0% {
     opacity: 0;
-    transform: scale(0.96) translateY(6px);
+    transform: scale(0.95) translateY(8px);
   }
   100% {
     opacity: 1;
     transform: scale(1.0) translateY(0);
+  }
+}
+
+@keyframes activityMorphExit {
+  0% {
+    opacity: 1;
+    transform: scale(1.0) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
   }
 }
 
@@ -157,23 +213,51 @@ input, textarea, select {
   }
 }
 
+@keyframes backdropExit {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 .animate-dialog-morph-enter {
-  animation: dialogMorphEnter 240ms var(--ease-fast-out-slow-in) forwards;
+  animation: dialogMorphEnter 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-dialog-morph-exit {
+  animation: dialogMorphExit 180ms cubic-bezier(0.4, 0, 1, 1) forwards;
   will-change: transform, opacity;
 }
 
 .animate-popup-morph-enter {
-  animation: popupMorphEnter 190ms var(--ease-fast-out-slow-in) forwards;
+  animation: popupMorphEnter 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-popup-morph-exit {
+  animation: popupMorphExit 150ms cubic-bezier(0.4, 0, 1, 1) forwards;
   will-change: transform, opacity;
 }
 
 .animate-activity-morph-enter {
-  animation: activityMorphEnter 260ms var(--ease-fast-out-slow-in) forwards;
+  animation: activityMorphEnter 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-activity-morph-exit {
+  animation: activityMorphExit 200ms cubic-bezier(0.4, 0, 1, 1) forwards;
   will-change: transform, opacity;
 }
 
 .animate-backdrop-in {
-  animation: backdropEnter 200ms ease-out forwards;
+  animation: backdropEnter 220ms ease-out forwards;
+}
+
+.animate-backdrop-out {
+  animation: backdropExit 170ms ease-in forwards;
 }
 
 /* Fallback legacy classes */

@@ -11,6 +11,7 @@ import {
   Pencil,
   Info,
   Trash2,
+  ChevronDown,
 } from 'lucide-react';
 import { useSheetDetails } from '../hooks/useSheetDetails';
 import { dbClient } from '../db/dbClient';
@@ -25,11 +26,112 @@ import { MoneyTransferDialog } from '../components/MoneyTransferDialog';
 import { ExpenseDetailsDialog } from '../components/ExpenseDetailsDialog';
 import { BalancesDialog } from '../components/BalancesDialog';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useMorphPresence } from '../hooks/useMorphPresence';
 
 interface SheetViewPageProps {
   sheetId: number;
   onBack: () => void;
 }
+
+const ExpenseCardMenu: React.FC<{
+  isOpen: boolean;
+  isReadOnly: boolean;
+  onEdit: () => void;
+  onDetails: () => void;
+  onDelete: () => void;
+}> = ({ isOpen, isReadOnly, onEdit, onDetails, onDelete }) => {
+  const { shouldRender, isClosing } = useMorphPresence(isOpen, 150);
+  if (!shouldRender) return null;
+
+  return (
+    <div
+      className={`absolute right-4 top-12 z-30 w-36 rounded-2xl bg-surface py-1.5 shadow-xl border border-cardStroke origin-top-right ${
+        isClosing ? 'animate-popup-morph-exit' : 'animate-popup-morph-enter'
+      }`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {!isReadOnly && (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-2.5 transition-colors"
+        >
+          <Pencil className="w-3.5 h-3.5 text-textSecondary" />
+          <span>Edit</span>
+        </button>
+      )}
+
+      {!isReadOnly && <div className="border-t border-cardStroke" />}
+
+      <button
+        type="button"
+        onClick={onDetails}
+        className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-2.5 transition-colors"
+      >
+        <Info className="w-3.5 h-3.5 text-textSecondary" />
+        <span>Details</span>
+      </button>
+
+      {!isReadOnly && (
+        <>
+          <div className="border-t border-cardStroke" />
+          <button
+            type="button"
+            onClick={onDelete}
+            className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-giveText hover:bg-giveText/10 flex items-center gap-2.5 transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-giveText" />
+            <span>Delete</span>
+          </button>
+        </>
+      )}
+    </div>
+  );
+};
+
+const AddExpenseOptionsPopover: React.FC<{
+  isOpen: boolean;
+  onAddExpense: () => void;
+  onMoneyTransfer: () => void;
+}> = ({ isOpen, onAddExpense, onMoneyTransfer }) => {
+  const { shouldRender, isClosing } = useMorphPresence(isOpen, 150);
+  if (!shouldRender) return null;
+
+  return (
+    <div
+      className={`absolute bottom-16 right-0 w-48 rounded-2xl bg-surface py-1.5 shadow-2xl border border-cardStroke origin-bottom-right mb-2 z-40 ${
+        isClosing ? 'animate-popup-morph-exit' : 'animate-popup-morph-enter'
+      }`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onAddExpense();
+        }}
+        className="w-full text-left px-4 py-3 text-sm font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
+      >
+        <Receipt className="w-4 h-4 text-textSecondary" />
+        <span>Add Expense</span>
+      </button>
+
+      <div className="border-t border-cardStroke" />
+
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onMoneyTransfer();
+        }}
+        className="w-full text-left px-4 py-3 text-sm font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
+      >
+        <ArrowRightLeft className="w-4 h-4 text-textSecondary" />
+        <span>Money Transfer</span>
+      </button>
+    </div>
+  );
+};
 
 export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack }) => {
   const { sheet, contributors, itemsWithDetails, totalSpent, loading } = useSheetDetails(sheetId);
@@ -64,6 +166,7 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
 
   // Long press handling for + Add Expense button
   const longPressTimer = useRef<number | null>(null);
+  const didLongPressRef = useRef(false);
 
   const isReadOnly = Boolean(sheet?.isReadOnly);
 
@@ -274,96 +377,100 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
 
   return (
     <div
-      className="min-h-screen max-w-xl mx-auto flex flex-col px-4 pt-2 pb-28 relative select-none animate-activity-morph-enter"
+      className="h-full max-h-dvh max-w-xl w-full mx-auto flex flex-col overflow-hidden relative select-none animate-activity-morph-enter"
       onClick={() => {
         setActiveMenuItemId(null);
         setIsAddOptionsOpen(false);
       }}
     >
-      {/* Top Bar matching sheetTopBar in sheet_view.xml */}
-      <header className="flex items-center justify-between h-[60px] px-1">
-        <button
-          type="button"
-          onClick={onBack}
-          className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surfaceAlt text-iconTint active:scale-95 transition-all shrink-0"
-          title="Back to sheets"
-        >
-          <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
-        </button>
-
-        <div className="flex-1 min-w-0 mx-2 overflow-x-auto no-scrollbar">
-          <h1 className="text-[18px] font-bold text-textPrimary tracking-tight truncate whitespace-nowrap">
-            {sheet?.sheetName || 'Sheet'}
-          </h1>
-        </div>
-
-        {itemsWithDetails.length >= 2 ? (
+      {/* Pinned Top Bar + Hero Card + Search Bar + EXPENSES label matching sheet_view.xml */}
+      <div className="shrink-0 px-4 pt-2 pb-1 z-10 bg-gradient-to-b from-bgStart via-bgStart to-transparent">
+        {/* Top Bar matching sheetTopBar in sheet_view.xml */}
+        <header className="flex items-center justify-between h-[52px] px-1">
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsSortOpen(true);
-            }}
+            onClick={onBack}
             className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surfaceAlt text-iconTint active:scale-95 transition-all shrink-0"
-            title="Sort expenses"
+            title="Back to sheets"
+            aria-label="Back to sheets"
           >
-            <ArrowUpDown className="w-5 h-5 stroke-[2]" />
+            <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
           </button>
-        ) : (
-          <div className="w-10 h-10 shrink-0" />
-        )}
-      </header>
 
-      {/* Hero Card matching summaryCard in sheet_view.xml */}
-      <div className="rounded-2xl p-[22px] bg-gradient-to-br from-[#111827] via-[#182132] to-[#1F2937] dark:from-[#161F30] dark:via-[#1B2538] dark:to-[#222E44] shadow-md border border-cardStroke/20 my-1">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold tracking-[0.12em] text-white/60 uppercase">
-            TOTAL SPENT
-          </span>
-          {isReadOnly && (
-            <span className="px-2.5 py-1 rounded-[10px] bg-white/10 text-carryAccent text-[10px] font-extrabold tracking-[0.1em] uppercase">
-              READ ONLY
-            </span>
-          )}
-        </div>
+          <div className="flex-1 min-w-0 mx-2 overflow-x-auto no-scrollbar">
+            <h1 className="text-[18px] font-bold text-textPrimary tracking-tight truncate whitespace-nowrap">
+              {sheet?.sheetName || 'Sheet'}
+            </h1>
+          </div>
 
-        <div className="text-[36px] font-bold text-white tracking-tight leading-none mt-2">
-          {formatCurrency(totalSpent)}
-        </div>
-      </div>
-
-      {/* Search Expenses Bar matching searchExpensesContainer in sheet_view.xml */}
-      <div className="relative my-2.5">
-        <div className="flex items-center h-[46px] px-3.5 rounded-2xl bg-surface border border-cardStroke shadow-sm">
-          <Search className="w-4 h-4 text-textHint shrink-0" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search expenses, payer, or people..."
-            className="w-full ml-2.5 bg-transparent text-sm text-textPrimary placeholder:text-textHint focus:outline-none"
-          />
-          {searchQuery && (
+          {itemsWithDetails.length >= 2 ? (
             <button
               type="button"
-              onClick={() => setSearchQuery('')}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-textHint hover:text-textPrimary shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsSortOpen(true);
+              }}
+              className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surfaceAlt text-iconTint active:scale-95 transition-all shrink-0"
+              title="Sort expenses"
             >
-              <X className="w-4 h-4" />
+              <ArrowUpDown className="w-5 h-5 stroke-[2]" />
             </button>
+          ) : (
+            <div className="w-10 h-10 shrink-0" />
           )}
-        </div>
-      </div>
+        </header>
 
-      {/* Section Header matching tv_recent_expenses_label */}
-      <div className="px-1 mt-1 mb-1.5">
-        <span className="text-[11px] font-bold tracking-[0.12em] text-textHint uppercase">
-          EXPENSES
-        </span>
+        {/* Hero Card matching summaryCard in sheet_view.xml */}
+        <div className="rounded-2xl p-[18px] sm:p-[20px] bg-gradient-to-br from-[#111827] via-[#182132] to-[#1F2937] dark:from-[#161F30] dark:via-[#1B2538] dark:to-[#222E44] shadow-md border border-cardStroke/20 my-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold tracking-[0.12em] text-white/60 uppercase">
+              TOTAL SPENT
+            </span>
+            {isReadOnly && (
+              <span className="px-2.5 py-1 rounded-[10px] bg-white/10 text-carryAccent text-[10px] font-extrabold tracking-[0.1em] uppercase">
+                READ ONLY
+              </span>
+            )}
+          </div>
+
+          <div className="text-[34px] sm:text-[36px] font-bold text-white tracking-tight leading-none mt-2">
+            {formatCurrency(totalSpent)}
+          </div>
+        </div>
+
+        {/* Search Expenses Bar matching searchExpensesContainer in sheet_view.xml */}
+        <div className="relative my-2">
+          <div className="flex items-center h-[46px] px-3.5 rounded-2xl bg-surface border border-cardStroke shadow-sm focus-within:border-textPrimary transition-colors">
+            <Search className="w-4 h-4 text-textHint shrink-0" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search expenses, payer, or people..."
+              className="w-full ml-2.5 bg-transparent text-sm text-textPrimary placeholder:text-textHint focus:outline-none focus:ring-0"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-textHint hover:text-textPrimary shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Section Header matching tv_recent_expenses_label */}
+        <div className="px-1 mt-1 mb-1">
+          <span className="text-[11px] font-bold tracking-[0.12em] text-textHint uppercase">
+            EXPENSES
+          </span>
+        </div>
       </div>
 
       {/* Expense List matching expense_card.xml in Android */}
-      <main className="flex-1 space-y-2.5">
+      <main className="flex-1 overflow-y-auto px-4 py-1 space-y-2.5 overscroll-contain">
         {loading ? (
           <div className="py-20 text-center text-sm font-medium text-textHint">
             Loading expenses...
@@ -484,66 +591,31 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
                   </div>
                 </div>
 
-                {/* Card Overflow Menu matching popup_layout.xml */}
-                {isMenuOpen && (
-                  <div
-                    className="absolute right-4 top-12 z-30 w-36 rounded-2xl bg-surface py-1.5 shadow-xl border border-cardStroke animate-popup-morph-enter origin-top-right"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {!isReadOnly && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveMenuItemId(null);
-                          setEditingItem(item);
-                          if (
-                            expense.itemType === ITEM_TYPE.TYPE_EXPENSE ||
-                            expense.itemType === ITEM_TYPE.TYPE_CARRYOVER
-                          ) {
-                            setIsAddExpenseOpen(true);
-                          } else {
-                            setIsMoneyTransferOpen(true);
-                          }
-                        }}
-                        className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-2.5 transition-colors"
-                      >
-                        <Pencil className="w-3.5 h-3.5 text-textSecondary" />
-                        <span>Edit</span>
-                      </button>
-                    )}
-
-                    {!isReadOnly && <div className="border-t border-cardStroke" />}
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveMenuItemId(null);
-                        setDetailsItem(item);
-                      }}
-                      className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-2.5 transition-colors"
-                    >
-                      <Info className="w-3.5 h-3.5 text-textSecondary" />
-                      <span>Details</span>
-                    </button>
-
-                    {!isReadOnly && (
-                      <>
-                        <div className="border-t border-cardStroke" />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveMenuItemId(null);
-                            setDeletingItem(item);
-                          }}
-                          className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-giveText hover:bg-giveText/10 flex items-center gap-2.5 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5 text-giveText" />
-                          <span>Delete</span>
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
+                {/* Card Overflow Menu with morph enter & exit */}
+                <ExpenseCardMenu
+                  isOpen={isMenuOpen}
+                  isReadOnly={isReadOnly}
+                  onEdit={() => {
+                    setActiveMenuItemId(null);
+                    setEditingItem(item);
+                    if (
+                      expense.itemType === ITEM_TYPE.TYPE_EXPENSE ||
+                      expense.itemType === ITEM_TYPE.TYPE_CARRYOVER
+                    ) {
+                      setIsAddExpenseOpen(true);
+                    } else {
+                      setIsMoneyTransferOpen(true);
+                    }
+                  }}
+                  onDetails={() => {
+                    setActiveMenuItemId(null);
+                    setDetailsItem(item);
+                  }}
+                  onDelete={() => {
+                    setActiveMenuItemId(null);
+                    setDeletingItem(item);
+                  }}
+                />
               </div>
             );
           })
@@ -551,8 +623,8 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
       </main>
 
       {/* Bottom Sticky Action Bar matching sheet_view.xml */}
-      <footer className="fixed bottom-0 left-0 right-0 z-30 p-4 pb-5 bg-gradient-to-t from-bgEnd via-bgEnd/95 to-transparent">
-        <div className="max-w-xl mx-auto flex items-center gap-3">
+      <footer className="shrink-0 p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-bgEnd via-bgEnd to-transparent z-20">
+        <div className="flex items-center gap-3">
           {itemsWithDetails.length > 0 && (
             <button
               type="button"
@@ -565,65 +637,100 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
 
           {!isReadOnly && (
             <div className="relative flex-1">
-              {/* Popover options for + Add Expense matching popup_add_expense_options.xml */}
+              {/* Outside backdrop when popover is open */}
               {isAddOptionsOpen && (
                 <div
-                  className="absolute bottom-16 right-0 w-48 rounded-2xl bg-surface py-1.5 shadow-2xl border border-cardStroke animate-popup-morph-enter origin-bottom-right mb-2"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsAddOptionsOpen(false);
-                      setEditingItem(null);
-                      setIsAddExpenseOpen(true);
-                    }}
-                    className="w-full text-left px-4 py-3 text-sm font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
-                  >
-                    <Receipt className="w-4 h-4 text-textSecondary" />
-                    <span>Add Expense</span>
-                  </button>
-
-                  <div className="border-t border-cardStroke" />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsAddOptionsOpen(false);
-                      setEditingItem(null);
-                      setIsMoneyTransferOpen(true);
-                    }}
-                    className="w-full text-left px-4 py-3 text-sm font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
-                  >
-                    <ArrowRightLeft className="w-4 h-4 text-textSecondary" />
-                    <span>Money Transfer</span>
-                  </button>
-                </div>
+                  className="fixed inset-0 z-30 bg-transparent"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsAddOptionsOpen(false);
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation();
+                    setIsAddOptionsOpen(false);
+                  }}
+                />
               )}
 
-              <button
-                type="button"
-                onClick={() => {
+              {/* Popover options for + Add Expense with morph enter & exit */}
+              <AddExpenseOptionsPopover
+                isOpen={isAddOptionsOpen}
+                onAddExpense={() => {
+                  setIsAddOptionsOpen(false);
                   setEditingItem(null);
                   setIsAddExpenseOpen(true);
                 }}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  setIsAddOptionsOpen(!isAddOptionsOpen);
+                onMoneyTransfer={() => {
+                  setIsAddOptionsOpen(false);
+                  setEditingItem(null);
+                  setIsMoneyTransferOpen(true);
                 }}
-                onTouchStart={() => {
-                  longPressTimer.current = window.setTimeout(() => {
-                    setIsAddOptionsOpen(true);
-                  }, 450);
-                }}
-                onTouchEnd={() => {
-                  if (longPressTimer.current) clearTimeout(longPressTimer.current);
-                }}
-                className="w-full h-[52px] px-4 rounded-xl bg-btnPrimaryBg text-btnPrimaryText font-bold text-[15px] shadow-md hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-              >
-                <Plus className="w-4 h-4 stroke-[2.5]" />
-                <span>Add Expense</span>
-              </button>
+              />
+
+              <div className="relative flex items-center">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (didLongPressRef.current) {
+                      didLongPressRef.current = false;
+                      return;
+                    }
+                    setEditingItem(null);
+                    setIsAddExpenseOpen(true);
+                  }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (didLongPressRef.current) return;
+                    setIsAddOptionsOpen((prev) => !prev);
+                  }}
+                  onTouchStart={() => {
+                    didLongPressRef.current = false;
+                    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+                    longPressTimer.current = window.setTimeout(() => {
+                      didLongPressRef.current = true;
+                      try {
+                        navigator.vibrate?.(40);
+                      } catch {}
+                      setIsAddOptionsOpen(true);
+                    }, 400);
+                  }}
+                  onTouchMove={() => {
+                    if (longPressTimer.current) {
+                      clearTimeout(longPressTimer.current);
+                      longPressTimer.current = null;
+                    }
+                  }}
+                  onTouchEnd={(e) => {
+                    if (longPressTimer.current) {
+                      clearTimeout(longPressTimer.current);
+                      longPressTimer.current = null;
+                    }
+                    if (didLongPressRef.current) {
+                      e.preventDefault();
+                    }
+                  }}
+                  className="w-full h-[52px] pl-4 pr-11 rounded-xl bg-btnPrimaryBg text-btnPrimaryText font-bold text-[15px] shadow-md hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4 stroke-[2.5]" />
+                  <span>Add Expense</span>
+                </button>
+
+                {/* Secondary affordance icon to easily open options on tap/click */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsAddOptionsOpen((prev) => !prev);
+                  }}
+                  title="More options"
+                  aria-label="More options"
+                  className="absolute right-1 w-10 h-10 rounded-lg flex items-center justify-center text-btnPrimaryText/70 hover:text-btnPrimaryText hover:bg-white/10 active:scale-95 transition-all"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
         </div>
