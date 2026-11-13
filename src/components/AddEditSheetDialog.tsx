@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X, Trash2 } from 'lucide-react';
 import type { SheetWithContributorsAndItems } from '../types/models';
 import { ConfirmDialog } from './ConfirmDialog';
 import { formatCurrency } from '../utils/formatters';
@@ -110,7 +110,12 @@ export const AddEditSheetDialog: React.FC<AddEditSheetDialogProps> = ({
   const handleAddRow = () => {
     setRows((prev) => [
       ...prev,
-      { tempId: nextIdRef.current--, originalId: 0, name: '', carryoverBalance: 0 },
+      {
+        tempId: nextIdRef.current--,
+        originalId: 0,
+        name: '',
+        carryoverBalance: 0,
+      },
     ]);
   };
 
@@ -122,31 +127,29 @@ export const AddEditSheetDialog: React.FC<AddEditSheetDialogProps> = ({
   };
 
   const requestRemoveRow = (row: ContributorRow) => {
-    const trimmedName = row.name.trim();
-
+    // If cloned with carryover and non-zero balance
     if (Math.abs(row.carryoverBalance) >= 0.005) {
-      const formatted = formatCurrency(Math.abs(row.carryoverBalance));
-      const displayName = trimmedName || 'This member';
-      const msg =
-        row.carryoverBalance > 0
-          ? `${displayName} will receive ${formatted} from the previous sheet. Deleting them will drop their carried-over balance.`
-          : `${displayName} owes ${formatted} from the previous sheet. Deleting them will drop their carried-over balance.`;
-      setPendingDeleteRow(row);
-      setDeleteConfirmInfo({ title: 'Drop carried balance?', message: msg });
-      return;
-    }
-
-    if (row.originalId > 0 || trimmedName.length > 0) {
-      const displayName = trimmedName || 'this member';
       setPendingDeleteRow(row);
       setDeleteConfirmInfo({
-        title: 'Remove member?',
-        message: `Are you sure you want to remove "${displayName}" from this sheet?`,
+        title: 'Drop carried balance?',
+        message: `${row.name || 'This member'} has an unsettled balance of ₹${Math.abs(
+          row.carryoverBalance
+        ).toFixed(2)}. Dropping them will exclude their balance from the cloned sheet.`,
       });
       return;
     }
 
-    // Empty unsaved row: remove directly
+    // If editing and existing member
+    if (isEditing && row.originalId > 0 && row.name.trim().length > 0) {
+      setPendingDeleteRow(row);
+      setDeleteConfirmInfo({
+        title: 'Remove member?',
+        message: `Are you sure you want to remove "${row.name}" from this sheet?`,
+      });
+      return;
+    }
+
+    // Otherwise remove directly
     setRows((prev) => prev.filter((r) => r.tempId !== row.tempId));
   };
 
@@ -160,70 +163,68 @@ export const AddEditSheetDialog: React.FC<AddEditSheetDialogProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanName = sheetName.trim();
-    if (!cleanName) {
-      setErrorMsg('Enter sheet name');
+    const cleanSheetName = sheetName.trim();
+    if (!cleanSheetName) {
+      setErrorMsg('Sheet name cannot be empty.');
       return;
     }
 
-    const validRows: Array<{ id: number; name: string; carryoverBalance: number }> = [];
-    const nameSet = new Set<string>();
+    // Extract valid contributors
+    const validContributors = rows
+      .map((r) => ({
+        id: r.originalId,
+        name: r.name.trim(),
+        carryoverBalance: r.carryoverBalance,
+      }))
+      .filter((r) => r.name.length > 0);
 
-    for (const r of rows) {
-      const trimmed = r.name.trim();
-      if (!trimmed) {
-        setErrorMsg('All member names are required');
-        return;
-      }
-      const lower = trimmed.toLowerCase();
+    if (validContributors.length < 2) {
+      setErrorMsg('A sheet requires at least 2 members with non-empty names.');
+      return;
+    }
+
+    // Case-insensitive uniqueness check
+    const nameSet = new Set<string>();
+    for (const c of validContributors) {
+      const lower = c.name.toLowerCase();
       if (nameSet.has(lower)) {
-        setErrorMsg('Contributor names must be unique.');
+        setErrorMsg(`Member "${c.name}" is duplicated. Member names must be unique.`);
         return;
       }
       nameSet.add(lower);
-      validRows.push({
-        id: r.originalId,
-        name: trimmed,
-        carryoverBalance: r.carryoverBalance,
-      });
     }
 
-    if (validRows.length < 2) {
-      setErrorMsg('Need at least 2 valid contributors');
-      return;
-    }
-
-    onSave(cleanName, sheetNotes.trim() || null, validRows);
+    onSave(cleanSheetName, sheetNotes.trim() || null, validContributors);
     onClose();
   };
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-backdrop-in overflow-y-auto"
+        onClick={onClose}
+      >
         <div
-          className="w-full max-w-md max-h-[92vh] flex flex-col rounded-3xl bg-surface p-6 shadow-2xl border border-cardStroke animate-morph-in"
+          className="w-full max-w-[420px] max-h-[92vh] flex flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke animate-dialog-morph-enter my-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-cardStroke">
-            <h2 className="text-xl font-bold text-textPrimary tracking-tight">
+          {/* Header matching add_sheet.xml */}
+          <div className="flex items-center justify-between pb-3">
+            <h2 className="text-[20px] font-bold text-textPrimary tracking-tight">
               {isEditing ? 'Edit Sheet' : 'Create Sheet'}
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-full hover:bg-surfaceAlt text-textHint hover:text-textPrimary transition-colors"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-textHint hover:text-textPrimary transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto mt-4 pr-1 space-y-4">
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto mt-1 pr-0.5 space-y-3.5">
             <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-textHint">
-                Sheet Name *
-              </label>
               <input
                 type="text"
                 value={sheetName}
@@ -231,55 +232,42 @@ export const AddEditSheetDialog: React.FC<AddEditSheetDialogProps> = ({
                   setSheetName(e.target.value);
                   setErrorMsg(null);
                 }}
-                placeholder="e.g. Goa Trip, Flat 402"
-                className="mt-1.5 w-full px-4 py-3 rounded-2xl bg-surfaceAlt border border-cardStroke text-textPrimary placeholder:text-textHint text-sm focus:outline-none focus:ring-2 focus:ring-textPrimary"
-                autoFocus
+                placeholder="Sheet Name"
+                className="w-full h-[52px] px-3.5 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary placeholder:text-textHint text-base focus:outline-none focus:ring-1 focus:ring-textPrimary"
+                autoFocus={!isEditing}
               />
             </div>
 
             <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-textHint">
-                Notes (Optional)
-              </label>
               <textarea
                 value={sheetNotes}
                 onChange={(e) => setSheetNotes(e.target.value)}
-                placeholder="Add any details, notes or guidelines..."
+                placeholder="Description (Optional)"
                 rows={2}
-                className="mt-1.5 w-full px-4 py-2.5 rounded-2xl bg-surfaceAlt border border-cardStroke text-textPrimary placeholder:text-textHint text-sm focus:outline-none focus:ring-2 focus:ring-textPrimary resize-none"
+                className="w-full min-h-[64px] p-3.5 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary placeholder:text-textHint text-sm resize-none focus:outline-none focus:ring-1 focus:ring-textPrimary leading-normal"
               />
             </div>
 
             {/* Contributors Section */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-textHint">
-                  Members (Min 2) *
-                </label>
-                <button
-                  type="button"
-                  onClick={handleAddRow}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfaceAlt hover:bg-surfaceHigh text-textPrimary text-xs font-semibold transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add Member
-                </button>
-              </div>
+              <span className="text-[11px] font-bold tracking-[0.12em] text-textHint uppercase block mb-2">
+                CONTRIBUTORS
+              </span>
 
-              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                {rows.map((row, index) => (
+              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-0.5">
+                {rows.map((row) => (
                   <div key={row.tempId} className="flex items-center gap-2">
-                    <div className="flex-1 relative">
+                    <div className="flex-1 flex items-center h-[48px] px-3.5 rounded-xl bg-surfaceAlt border border-cardStroke focus-within:ring-1 focus-within:ring-textPrimary">
                       <input
                         type="text"
                         value={row.name}
                         onChange={(e) => handleRowNameChange(row.tempId, e.target.value)}
-                        placeholder={`Member ${index + 1}`}
-                        className="w-full px-4 py-2.5 rounded-2xl bg-surfaceAlt border border-cardStroke text-textPrimary placeholder:text-textHint text-sm focus:outline-none focus:ring-2 focus:ring-textPrimary"
+                        placeholder={`Name`}
+                        className="flex-1 bg-transparent text-textPrimary placeholder:text-textHint text-[15px] focus:outline-none min-w-0"
                       />
                       {Math.abs(row.carryoverBalance) >= 0.005 && (
                         <span
-                          className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold ${
+                          className={`shrink-0 ml-2 text-xs font-bold ${
                             row.carryoverBalance > 0 ? 'text-receiveText' : 'text-giveText'
                           }`}
                         >
@@ -288,15 +276,16 @@ export const AddEditSheetDialog: React.FC<AddEditSheetDialogProps> = ({
                         </span>
                       )}
                     </div>
-                    {/* Delete button only visible when rows.length > 2 */}
+
+                    {/* Delete button (red trash) matching item_contributor.xml */}
                     {rows.length > 2 && (
                       <button
                         type="button"
                         onClick={() => requestRemoveRow(row)}
-                        className="p-2.5 rounded-xl hover:bg-giveText/10 text-textHint hover:text-giveText transition-colors"
-                        title="Remove member"
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-giveText hover:bg-giveText/10 transition-colors shrink-0"
+                        title="Delete Contributor"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-5 h-5" />
                       </button>
                     )}
                   </div>
@@ -305,22 +294,25 @@ export const AddEditSheetDialog: React.FC<AddEditSheetDialogProps> = ({
             </div>
 
             {errorMsg && (
-              <p className="text-xs font-semibold text-giveText animate-fade-in">{errorMsg}</p>
+              <p className="text-xs font-semibold text-giveText leading-relaxed pt-1">
+                {errorMsg}
+              </p>
             )}
 
-            <div className="pt-3 border-t border-cardStroke flex gap-3">
+            {/* Bottom Buttons matching layoutButtons in add_sheet.xml */}
+            <div className="pt-3 flex gap-3">
               <button
                 type="button"
-                onClick={onClose}
-                className="flex-1 py-3 rounded-2xl text-sm font-semibold text-textSecondary bg-surfaceAlt hover:bg-surfaceHigh transition-colors"
+                onClick={handleAddRow}
+                className="flex-1 h-[48px] rounded-xl text-sm font-bold text-textPrimary bg-surfaceAlt hover:bg-surfaceHigh border border-cardStroke transition-colors"
               >
-                Cancel
+                + Add Person
               </button>
               <button
                 type="submit"
-                className="flex-1 py-3 rounded-2xl text-sm font-semibold text-btnPrimaryText bg-btnPrimaryBg hover:opacity-90 transition-opacity"
+                className="flex-1 h-[48px] rounded-xl text-sm font-bold text-btnPrimaryText bg-btnPrimaryBg hover:opacity-90 transition-opacity"
               >
-                {isEditing ? 'Save' : 'Create Sheet'}
+                {isEditing ? 'Save' : 'Create'}
               </button>
             </div>
           </form>

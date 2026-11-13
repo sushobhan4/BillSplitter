@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowRightLeft } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import type { Contributor, ItemWithPayerAndConsumers } from '../types/models';
 import { ITEM_TYPE } from '../types/models';
 
@@ -36,7 +36,7 @@ export const MoneyTransferDialog: React.FC<MoneyTransferDialogProps> = ({
     if (!isOpen) return;
 
     if (itemToEdit) {
-      setAmountStr(itemToEdit.item.amount.toString());
+      setAmountStr(itemToEdit.item.amount > 0 ? itemToEdit.item.amount.toString() : '');
       setFromId(itemToEdit.payer.contributorID);
       const firstConsumer = itemToEdit.consumers[0];
       setToId(firstConsumer ? firstConsumer.contributorID : '');
@@ -57,14 +57,11 @@ export const MoneyTransferDialog: React.FC<MoneyTransferDialogProps> = ({
       ? 'Edit Money Transfer'
       : 'Money Transfer';
 
-  const fromCandidates = sortedContributors.filter((c) => c.contributorID !== toId);
-  const toCandidates = sortedContributors.filter((c) => c.contributorID !== fromId);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const amount = parseFloat(amountStr) || 0;
     if (amount <= 0) {
-      setErrorMsg('Invalid amount.');
+      setErrorMsg('Please enter a valid amount.');
       return;
     }
     if (!fromId) {
@@ -90,104 +87,110 @@ export const MoneyTransferDialog: React.FC<MoneyTransferDialogProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-backdrop-in overflow-y-auto"
+      onClick={onClose}
+    >
       <div
-        className="w-full max-w-sm rounded-3xl bg-surface p-6 shadow-2xl border border-cardStroke animate-morph-in"
+        className="w-full max-w-[400px] flex flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke animate-dialog-morph-enter my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between pb-3 border-b border-cardStroke">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-transferPanel text-transferAccent">
-              <ArrowRightLeft className="w-4 h-4" />
+        {/* Title: Centered 19sp bold */}
+        <h2 className="text-[19px] font-bold text-center text-textPrimary tracking-tight">
+          {title}
+        </h2>
+
+        <form onSubmit={handleSubmit} className="mt-2 space-y-3.5">
+          {/* Amount Section matching Android et_transfer_amount */}
+          <div className="flex flex-col items-center pt-2">
+            <span className="text-[11px] font-bold tracking-[0.12em] text-textHint uppercase">
+              AMOUNT
+            </span>
+            <div className="w-full flex items-center justify-center mt-1">
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={amountStr}
+                onChange={(e) => {
+                  setAmountStr(e.target.value);
+                  setErrorMsg(null);
+                }}
+                placeholder="0.00"
+                className="w-full text-center text-[40px] font-bold bg-transparent text-textPrimary placeholder:text-textHint outline-none border-none py-1 leading-none tracking-tight"
+                autoFocus={!itemToEdit}
+              />
             </div>
-            <h2 className="text-lg font-bold text-textPrimary tracking-tight">{title}</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-surfaceAlt text-textHint hover:text-textPrimary transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-textHint">
-              Amount (₹) *
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={amountStr}
-              onChange={(e) => {
-                setAmountStr(e.target.value);
-                setErrorMsg(null);
-              }}
-              placeholder="0.00"
-              className="mt-1.5 w-full px-4 py-2.5 rounded-2xl bg-surfaceAlt border border-cardStroke text-textPrimary placeholder:text-textHint text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-textPrimary"
-              autoFocus
-            />
           </div>
 
+          {/* FROM Dropdown matching spinner_transfer_from */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-textHint">
-              From (Sender) *
+            <label className="text-[11px] font-bold tracking-[0.08em] text-textHint uppercase block mb-1">
+              FROM
             </label>
-            <select
-              value={fromId}
-              onChange={(e) => {
-                setFromId(e.target.value ? Number(e.target.value) : '');
-                setErrorMsg(null);
-              }}
-              className="mt-1.5 w-full px-4 py-2.5 rounded-2xl bg-surfaceAlt border border-cardStroke text-textPrimary text-sm font-medium focus:outline-none focus:ring-2 focus:ring-textPrimary cursor-pointer"
-            >
-              <option value="">Select Sender</option>
-              {fromCandidates.map((c) => (
-                <option key={c.contributorID} value={c.contributorID}>
-                  {c.contributorName}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={fromId}
+                onChange={(e) => {
+                  setFromId(e.target.value ? Number(e.target.value) : '');
+                  setErrorMsg(null);
+                }}
+                className="w-full h-[50px] px-3.5 pr-10 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary text-[15px] appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-textPrimary"
+              >
+                <option value="">Select sender</option>
+                {sortedContributors.map((c) => (
+                  <option key={c.contributorID} value={c.contributorID}>
+                    {c.contributorName}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-4 h-4 text-textHint absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
 
+          {/* TO Dropdown matching spinner_transfer_to */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-textHint">
-              To (Recipient) *
+            <label className="text-[11px] font-bold tracking-[0.08em] text-textHint uppercase block mb-1">
+              TO
             </label>
-            <select
-              value={toId}
-              onChange={(e) => {
-                setToId(e.target.value ? Number(e.target.value) : '');
-                setErrorMsg(null);
-              }}
-              className="mt-1.5 w-full px-4 py-2.5 rounded-2xl bg-surfaceAlt border border-cardStroke text-textPrimary text-sm font-medium focus:outline-none focus:ring-2 focus:ring-textPrimary cursor-pointer"
-            >
-              <option value="">Select Recipient</option>
-              {toCandidates.map((c) => (
-                <option key={c.contributorID} value={c.contributorID}>
-                  {c.contributorName}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={toId}
+                onChange={(e) => {
+                  setToId(e.target.value ? Number(e.target.value) : '');
+                  setErrorMsg(null);
+                }}
+                className="w-full h-[50px] px-3.5 pr-10 rounded-xl bg-surfaceAlt border border-cardStroke text-textPrimary text-[15px] appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-textPrimary"
+              >
+                <option value="">Select recipient</option>
+                {sortedContributors.map((c) => (
+                  <option key={c.contributorID} value={c.contributorID}>
+                    {c.contributorName}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-4 h-4 text-textHint absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
 
           {errorMsg && (
-            <p className="text-xs font-semibold text-giveText animate-fade-in">{errorMsg}</p>
+            <p className="text-xs font-semibold text-giveText leading-relaxed pt-1">
+              {errorMsg}
+            </p>
           )}
 
-          <div className="pt-3 border-t border-cardStroke flex gap-3">
+          {/* Bottom Action Buttons */}
+          <div className="pt-3 flex gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-2xl text-sm font-semibold text-textSecondary bg-surfaceAlt hover:bg-surfaceHigh transition-colors"
+              className="flex-1 h-[46px] rounded-xl text-sm font-bold text-textPrimary bg-surfaceAlt hover:bg-surfaceHigh border border-cardStroke transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 rounded-2xl text-sm font-semibold text-btnPrimaryText bg-btnPrimaryBg hover:opacity-90 transition-opacity"
+              className="flex-1 h-[46px] rounded-xl text-sm font-bold text-btnPrimaryText bg-btnPrimaryBg hover:opacity-90 transition-opacity"
             >
               Save
             </button>

@@ -27,6 +27,8 @@
   --color-settle-stroke: #A7F3D0;
   --color-settle-panel: #D1FAE5;
   --color-settle-accent: #059669;
+  --color-settle-btn-bg: #DCFCE7;
+  --color-settle-btn-stroke: #86EFAC;
 
   --color-transfer-card: #FEF2F2;
   --color-transfer-stroke: #FECACA;
@@ -37,6 +39,9 @@
   --color-carry-stroke: #BFDBFE;
   --color-carry-panel: #DBEAFE;
   --color-carry-accent: #2563EB;
+
+  --ease-fast-out-slow-in: cubic-bezier(0.4, 0.0, 0.2, 1.0);
+  --ease-fast-out-linear-in: cubic-bezier(0.4, 0.0, 1.0, 1.0);
 }
 
 .dark {
@@ -64,6 +69,8 @@
   --color-settle-stroke: #1B4332;
   --color-settle-panel: #143026;
   --color-settle-accent: #34D399;
+  --color-settle-btn-bg: #133829;
+  --color-settle-btn-stroke: #245B43;
 
   --color-transfer-card: #261217;
   --color-transfer-stroke: #522029;
@@ -90,35 +97,98 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Modal and dialog animations matching Android morph enter */
-@keyframes morphIn {
-  from {
+/* Universal number input spinner suppression (prevents text clipping) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Input text rendering & box model */
+input, textarea, select {
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+/* Android Morph Animations (1:1 with UiSizing.kt & anim/*.xml) */
+@keyframes dialogMorphEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.90);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.0);
+  }
+}
+
+@keyframes popupMorphEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.0);
+  }
+}
+
+@keyframes activityMorphEnter {
+  0% {
     opacity: 0;
     transform: scale(0.96) translateY(6px);
   }
-  to {
+  100% {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scale(1.0) translateY(0);
   }
 }
 
-.animate-morph-in {
-  animation: morphIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+@keyframes backdropEnter {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.animate-dialog-morph-enter {
+  animation: dialogMorphEnter 240ms var(--ease-fast-out-slow-in) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-popup-morph-enter {
+  animation: popupMorphEnter 190ms var(--ease-fast-out-slow-in) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-activity-morph-enter {
+  animation: activityMorphEnter 260ms var(--ease-fast-out-slow-in) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-backdrop-in {
+  animation: backdropEnter 200ms ease-out forwards;
+}
+
+/* Fallback legacy classes */
+.animate-morph-in {
+  animation: dialogMorphEnter 240ms var(--ease-fast-out-slow-in) forwards;
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.15s ease-out forwards;
+  animation: backdropEnter 200ms ease-out forwards;
 }
 
 /* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;

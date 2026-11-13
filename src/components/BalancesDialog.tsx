@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { X, Check } from 'lucide-react';
+import { X } from 'lucide-react';
 import { BalanceCalculator, roundToPlaces } from '../utils/BalanceCalculator';
 import { formatCurrency } from '../utils/formatters';
+
 interface BalancesDialogProps {
   isOpen: boolean;
   initialBalances: Record<string, number>;
@@ -21,7 +22,7 @@ export const BalancesDialog: React.FC<BalancesDialogProps> = ({
   const [currentBalances, setCurrentBalances] = useState<Record<string, number>>(initialBalances);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Recipient selection dialog state
+  // Recipient selection dialog state matching dialog_select_recipient.xml
   const [recipientPrompt, setRecipientPrompt] = useState<{
     debtorName: string;
     amountOwed: number;
@@ -52,7 +53,7 @@ export const BalancesDialog: React.FC<BalancesDialogProps> = ({
     if (receivers.length === 0) return;
 
     if (receivers.length === 1) {
-      handleExecuteSettlement(debtorName, receivers[0].name, amountOwed);
+      handleExecuteSettlement(debtorName, receivers[0].name, Math.min(amountOwed, receivers[0].amountOwed));
     } else {
       setRecipientPrompt({ debtorName, amountOwed, receivers });
     }
@@ -83,29 +84,32 @@ export const BalancesDialog: React.FC<BalancesDialogProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-backdrop-in overflow-y-auto"
+        onClick={onClose}
+      >
         <div
-          className="w-full max-w-md max-h-[92vh] flex flex-col rounded-3xl bg-surface p-6 shadow-2xl border border-cardStroke animate-morph-in"
+          className="w-full max-w-[420px] max-h-[92vh] flex flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke animate-dialog-morph-enter my-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-cardStroke">
-            <h2 className="text-xl font-bold text-textPrimary tracking-tight">Balances</h2>
+          {/* Header matching dialog_balances.xml */}
+          <div className="flex items-center justify-between pb-3">
+            <h2 className="text-[20px] font-bold text-textPrimary tracking-tight">Balances</h2>
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-full hover:bg-surfaceAlt text-textHint hover:text-textPrimary transition-colors"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-textHint hover:text-textPrimary transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Segmented Tabs */}
-          <div className="mt-4 p-1 rounded-2xl bg-surfaceAlt border border-cardStroke flex gap-1">
+          {/* Tabs matching llBalanceTabs in dialog_balances.xml */}
+          <div className="bg-surfaceAlt rounded-[10px] p-1 flex gap-1 mt-1">
             <button
               type="button"
               onClick={() => setActiveTab('balances')}
-              className={`flex-1 py-2 rounded-xl text-xs font-bold tracking-tight transition-all ${
+              className={`flex-1 h-[38px] rounded-lg text-[13px] font-bold transition-all ${
                 activeTab === 'balances'
                   ? 'bg-btnPrimaryBg text-btnPrimaryText shadow-sm'
                   : 'text-textSecondary hover:text-textPrimary'
@@ -116,7 +120,7 @@ export const BalancesDialog: React.FC<BalancesDialogProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('settlePlan')}
-              className={`flex-1 py-2 rounded-xl text-xs font-bold tracking-tight transition-all ${
+              className={`flex-1 h-[38px] rounded-lg text-[13px] font-bold transition-all ${
                 activeTab === 'settlePlan'
                   ? 'bg-btnPrimaryBg text-btnPrimaryText shadow-sm'
                   : 'text-textSecondary hover:text-textPrimary'
@@ -126,142 +130,156 @@ export const BalancesDialog: React.FC<BalancesDialogProps> = ({
             </button>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto mt-4 pr-1 space-y-2.5 max-h-[58vh]">
-            {activeTab === 'balances' ? (
-              sortedBalanceEntries.map(([name, balance]) => {
+          {/* Tab 1: Net Balances List */}
+          {activeTab === 'balances' && (
+            <div className="mt-3 space-y-2 max-h-[290px] overflow-y-auto pr-0.5">
+              {sortedBalanceEntries.map(([name, balance]) => {
                 const isReceiver = balance > 0.005;
                 const isGiver = balance < -0.005;
-                const owed = Math.abs(balance);
+                const absBalance = Math.abs(balance);
 
                 return (
                   <div
                     key={name}
-                    className="flex items-center justify-between p-3.5 rounded-2xl bg-surfaceAlt border border-cardStroke"
+                    className="flex items-center justify-between px-4 py-3 rounded-[10px] bg-surfaceAlt gap-3"
                   >
-                    <div>
-                      <p className="text-sm font-bold text-textPrimary">{name}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-bold text-textPrimary truncate">{name}</p>
                       <p
-                        className={`text-xs font-semibold mt-0.5 ${
+                        className={`text-[13px] font-bold mt-0.5 ${
                           isReceiver
                             ? 'text-receiveText'
                             : isGiver
                             ? 'text-giveText'
-                            : 'text-textHint'
+                            : 'text-textHint font-medium'
                         }`}
                       >
-                        {isReceiver && `Will receive ${formatCurrency(balance)}`}
-                        {isGiver && `Will give ${formatCurrency(owed)}`}
-                        {!isReceiver && !isGiver && 'Settled up'}
+                        {isReceiver
+                          ? `Will receive ${formatCurrency(balance)}`
+                          : isGiver
+                          ? `Will give ${formatCurrency(absBalance)}`
+                          : 'Settled up'}
                       </p>
                     </div>
 
-                    {isGiver && !isReadOnly && (
+                    {!isReadOnly && isGiver && (
                       <button
                         type="button"
-                        onClick={() => handleMarkAsPaidFromBalances(name, owed)}
                         disabled={isSubmitting}
-                        className="px-3 py-1.5 rounded-xl bg-settleCard text-settleAccent border border-settleStroke hover:opacity-90 text-xs font-bold transition-opacity"
+                        onClick={() => handleMarkAsPaidFromBalances(name, absBalance)}
+                        className="h-9 px-3 rounded-[10px] bg-settleBtnBg border border-settleBtnStroke text-settleAccent hover:opacity-90 active:scale-95 text-xs font-bold transition-all shrink-0 shadow-sm"
                       >
-                        Mark as paid
+                        Mark as Paid
                       </button>
                     )}
                   </div>
                 );
-              })
-            ) : settlementTransfers.length === 0 ? (
-              <div className="py-10 text-center rounded-2xl bg-surfaceAlt border border-cardStroke">
-                <div className="inline-flex p-3 rounded-full bg-settlePanel text-settleAccent mb-2">
-                  <Check className="w-6 h-6 stroke-[2.5]" />
-                </div>
-                <p className="text-sm font-bold text-settleAccent">Everyone is settled up!</p>
-              </div>
-            ) : (
-              settlementTransfers.map((t, idx) => (
-                <div
-                  key={`${t.fromName}-${t.toName}-${idx}`}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-surfaceAlt border border-cardStroke"
-                >
-                  <div>
-                    <p className="text-sm font-bold text-textPrimary">
-                      {t.fromName} → {t.toName}
-                    </p>
-                    <p className="text-xs font-semibold text-textSecondary mt-0.5">
-                      Pay {formatCurrency(t.amount)}
-                    </p>
-                  </div>
+              })}
+            </div>
+          )}
 
-                  {!isReadOnly && (
-                    <button
-                      type="button"
-                      onClick={() => handleExecuteSettlement(t.fromName, t.toName, t.amount)}
-                      disabled={isSubmitting}
-                      className="px-3 py-1.5 rounded-xl bg-settleCard text-settleAccent border border-settleStroke hover:opacity-90 text-xs font-bold transition-opacity"
-                    >
-                      Mark as paid
-                    </button>
-                  )}
+          {/* Tab 2: Who Pays Whom List */}
+          {activeTab === 'settlePlan' && (
+            <div className="mt-3 space-y-2 max-h-[290px] overflow-y-auto pr-0.5">
+              {settlementTransfers.length === 0 ? (
+                <div className="p-6 rounded-[10px] bg-surfaceAlt text-center">
+                  <p className="text-sm font-bold text-settleAccent">
+                    Everyone is settled up!
+                  </p>
                 </div>
-              ))
-            )}
-          </div>
+              ) : (
+                settlementTransfers.map((transfer, idx) => (
+                  <div
+                    key={`${transfer.fromName}-${transfer.toName}-${idx}`}
+                    className="flex items-center justify-between px-4 py-3 rounded-[10px] bg-surfaceAlt gap-3"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-bold text-textPrimary truncate">
+                        {transfer.fromName} → {transfer.toName}
+                      </p>
+                      <p className="text-[13px] font-bold text-giveText mt-0.5">
+                        {formatCurrency(transfer.amount)}
+                      </p>
+                    </div>
+
+                    {!isReadOnly && (
+                      <button
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={() =>
+                          handleExecuteSettlement(
+                            transfer.fromName,
+                            transfer.toName,
+                            transfer.amount
+                          )
+                        }
+                        className="h-9 px-3 rounded-[10px] bg-settleBtnBg border border-settleBtnStroke text-settleAccent hover:opacity-90 active:scale-95 text-xs font-bold transition-all shrink-0 shadow-sm"
+                      >
+                        Mark as Paid
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Recipient Picker Dialog */}
+      {/* Recipient Prompt Modal matching dialog_select_recipient.xml */}
       {recipientPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+        <div
+          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-backdrop-in"
+          onClick={() => setRecipientPrompt(null)}
+        >
           <div
-            className="w-full max-w-sm rounded-3xl bg-surface p-6 shadow-2xl border border-cardStroke animate-morph-in"
+            className="w-full max-w-[360px] rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke animate-dialog-morph-enter my-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-bold text-textPrimary tracking-tight">
-              Who did {recipientPrompt.debtorName} pay?
+            <h3 className="text-[19px] font-bold text-textPrimary tracking-tight">
+              Paid to whom?
             </h3>
-            <p className="text-xs text-textSecondary mt-1">
-              Total to pay: {formatCurrency(recipientPrompt.amountOwed)}
+            <p className="text-xs text-textSecondary mt-1 leading-relaxed">
+              Who did <span className="font-bold text-textPrimary">{recipientPrompt.debtorName}</span> pay?
             </p>
 
-            <div className="mt-4 space-y-2 max-h-56 overflow-y-auto">
-              {recipientPrompt.receivers.map((r) => {
+            <div className="mt-4 space-y-2 max-h-56 overflow-y-auto pr-0.5">
+              {recipientPrompt.receivers.map((rec) => {
                 const payAmount = roundToPlaces(
-                  Math.min(recipientPrompt.amountOwed, r.amountOwed),
+                  Math.min(recipientPrompt.amountOwed, rec.amountOwed),
                   2
                 );
-
                 return (
                   <button
-                    key={r.name}
+                    key={rec.name}
                     type="button"
                     onClick={() =>
                       handleExecuteSettlement(
                         recipientPrompt.debtorName,
-                        r.name,
+                        rec.name,
                         payAmount
                       )
                     }
-                    className="w-full text-left p-3 rounded-2xl bg-surfaceAlt hover:bg-surfaceHigh border border-cardStroke transition-colors flex items-center justify-between group"
+                    className="w-full text-left p-3 rounded-xl bg-surfaceAlt hover:bg-surfaceHigh border border-cardStroke flex items-center justify-between transition-colors"
                   >
-                    <div>
-                      <p className="text-sm font-bold text-textPrimary">{r.name}</p>
-                      <p className="text-xs font-semibold text-settleAccent mt-0.5">
-                        Pay {formatCurrency(payAmount)} (owed {formatCurrency(r.amountOwed)})
-                      </p>
-                    </div>
+                    <span className="text-sm font-bold text-textPrimary truncate mr-2">
+                      {rec.name}
+                    </span>
+                    <span className="text-xs font-bold text-receiveText shrink-0">
+                      Up to {formatCurrency(payAmount)}
+                    </span>
                   </button>
                 );
               })}
             </div>
 
-            <div className="mt-5 pt-3 border-t border-cardStroke flex justify-end">
-              <button
-                type="button"
-                onClick={() => setRecipientPrompt(null)}
-                className="px-4 py-2 rounded-xl text-sm font-semibold text-textSecondary bg-surfaceAlt hover:bg-surfaceHigh transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setRecipientPrompt(null)}
+              className="mt-4 w-full h-[44px] rounded-xl text-sm font-bold text-textPrimary bg-surfaceAlt hover:bg-surfaceHigh border border-cardStroke transition-colors"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}

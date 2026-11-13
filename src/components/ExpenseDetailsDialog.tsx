@@ -17,9 +17,12 @@ export const ExpenseDetailsDialog: React.FC<ExpenseDetailsDialogProps> = ({
   if (!isOpen || !item) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-backdrop-in"
+      onClick={onClose}
+    >
       <div
-        className="w-full max-w-sm rounded-3xl bg-surface p-6 shadow-2xl border border-cardStroke animate-morph-in"
+        className="w-full max-w-sm rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke animate-dialog-morph-enter my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-3 border-b border-cardStroke">
@@ -27,7 +30,7 @@ export const ExpenseDetailsDialog: React.FC<ExpenseDetailsDialogProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-surfaceAlt text-textHint hover:text-textPrimary transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-textHint hover:text-textPrimary transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -35,32 +38,32 @@ export const ExpenseDetailsDialog: React.FC<ExpenseDetailsDialogProps> = ({
 
         <div className="mt-4 space-y-3 text-sm">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-textHint">Item</span>
-            <p className="mt-0.5 font-semibold text-textPrimary">{item.item.itemName}</p>
+            <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-textHint">Item</span>
+            <p className="mt-0.5 font-bold text-textPrimary text-base">{item.item.itemName}</p>
           </div>
 
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-textHint">Amount</span>
-            <p className="mt-0.5 font-bold text-textPrimary">{formatCurrency(item.item.amount)}</p>
+            <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-textHint">Amount</span>
+            <p className="mt-0.5 font-bold text-textPrimary text-base">{formatCurrency(item.item.amount)}</p>
           </div>
 
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-textHint">Paid by</span>
+            <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-textHint">Paid by</span>
             <p className="mt-0.5 text-textSecondary font-medium">{item.payer.contributorName}</p>
           </div>
 
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-textHint">Created</span>
+            <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-textHint">Created</span>
             <p className="mt-0.5 text-textSecondary">{formatDateTime(item.item.dateCreated)}</p>
           </div>
 
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-textHint">Modified</span>
+            <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-textHint">Modified</span>
             <p className="mt-0.5 text-textSecondary">{formatDateTime(item.item.dateModified)}</p>
           </div>
 
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-textHint">
+            <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-textHint">
               Consumers ({item.consumers.length})
             </span>
             <p className="mt-0.5 text-textSecondary leading-relaxed">
@@ -70,7 +73,7 @@ export const ExpenseDetailsDialog: React.FC<ExpenseDetailsDialogProps> = ({
 
           {item.item.notes && (
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-textHint">Notes</span>
+              <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-textHint">Notes</span>
               <p className="mt-0.5 text-textSecondary whitespace-pre-wrap leading-relaxed">
                 {item.item.notes}
               </p>
@@ -82,7 +85,7 @@ export const ExpenseDetailsDialog: React.FC<ExpenseDetailsDialogProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-2xl text-sm font-semibold text-textSecondary bg-surfaceAlt hover:bg-surfaceHigh transition-colors"
+            className="h-[42px] px-5 rounded-xl text-sm font-bold text-textPrimary bg-surfaceAlt hover:bg-surfaceHigh border border-cardStroke transition-colors"
           >
             Close
           </button>

@@ -15,7 +15,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isOpen,
   title,
   message,
-  confirmText = 'Confirm',
+  confirmText = 'Delete',
   cancelText = 'Cancel',
   isDestructive = true,
   onConfirm,
@@ -24,9 +24,12 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-backdrop-in"
+      onClick={onCancel}
+    >
       <div
-        className="w-full max-w-sm overflow-hidden rounded-2xl bg-surface p-6 shadow-2xl border border-cardStroke animate-morph-in"
+        className="w-full max-w-sm rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke animate-dialog-morph-enter my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-lg font-bold text-textPrimary tracking-tight">{title}</h3>
@@ -36,16 +39,16 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-textSecondary bg-surfaceAlt hover:bg-surfaceHigh transition-colors"
+            className="h-[44px] px-4 rounded-xl text-sm font-bold text-textPrimary bg-surfaceAlt hover:bg-surfaceHigh border border-cardStroke transition-colors"
           >
             {cancelText}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors ${
+            className={`h-[44px] px-5 rounded-xl text-sm font-bold transition-all shadow-sm ${
               isDestructive
-                ? 'bg-giveText hover:opacity-90'
+                ? 'bg-giveText text-white hover:opacity-90'
                 : 'bg-btnPrimaryBg text-btnPrimaryText hover:opacity-90'
             }`}
           >

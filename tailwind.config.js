@@ -30,6 +30,8 @@ export default {
         settleStroke: 'var(--color-settle-stroke)',
         settlePanel: 'var(--color-settle-panel)',
         settleAccent: 'var(--color-settle-accent)',
+        settleBtnBg: 'var(--color-settle-btn-bg)',
+        settleBtnStroke: 'var(--color-settle-btn-stroke)',
         
         // Transfer
         transferCard: 'var(--color-transfer-card)',

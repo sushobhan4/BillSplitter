@@ -8,6 +8,9 @@ import {
   MoreVertical,
   ArrowRightLeft,
   Receipt,
+  Pencil,
+  Info,
+  Trash2,
 } from 'lucide-react';
 import { useSheetDetails } from '../hooks/useSheetDetails';
 import { dbClient } from '../db/dbClient';
@@ -133,41 +136,45 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
       allConsumers
     );
 
-    const contribMap = new Map<number, string>(contributors.map((c) => [c.contributorID, c.contributorName]));
-    for (const [cId, bal] of netMap.entries()) {
-      const name = contribMap.get(cId);
+    // Remap ID to Name
+    const contributorIdMap = new Map<number, string>();
+    contributors.forEach((c) => contributorIdMap.set(c.contributorID, c.contributorName));
+
+    netMap.forEach((bal, id) => {
+      const name = contributorIdMap.get(id);
       if (name) balances[name] = bal;
-    }
+    });
+
     return balances;
   }, [contributors, itemsWithDetails]);
 
   // Actions
   const handleSaveExpense = async (
-    itemName: string,
+    name: string,
     amount: number,
     payerId: number,
-    consumerWeights: Array<{ contributorId: number; weight: number }>,
+    weights: Array<{ contributorId: number; weight: number }>,
     notes: string | null
   ) => {
     if (editingItem) {
       await dbClient.updateItem(
         sheetId,
         editingItem.item.itemID,
-        itemName,
+        name,
         amount,
         payerId,
-        consumerWeights,
+        weights,
         notes
       );
       setEditingItem(null);
     } else {
       await dbClient.insertItem(
         sheetId,
-        itemName,
+        name,
         amount,
         payerId,
         Date.now(),
-        consumerWeights,
+        weights,
         notes,
         ITEM_TYPE.TYPE_EXPENSE
       );
@@ -180,31 +187,36 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
     amount: number,
     itemType: typeof ITEM_TYPE.TYPE_MONEY_TRANSFER | typeof ITEM_TYPE.TYPE_SETTLEMENT
   ) => {
-    const fromName = contributors.find((c) => c.contributorID === fromId)?.contributorName || '';
-    const toName = contributors.find((c) => c.contributorID === toId)?.contributorName || '';
-    const transferTitle =
-      itemType === ITEM_TYPE.TYPE_SETTLEMENT ? `${fromName} paid ${toName}` : `${fromName} → ${toName}`;
+    const fromName = contributors.find((c) => c.contributorID === fromId)?.contributorName || 'Sender';
+    const toName = contributors.find((c) => c.contributorID === toId)?.contributorName || 'Receiver';
+
+    const itemName =
+      itemType === ITEM_TYPE.TYPE_SETTLEMENT
+        ? `${fromName} paid ${toName}`
+        : `${fromName} → ${toName}`;
+
+    const notes = itemType === ITEM_TYPE.TYPE_SETTLEMENT ? 'Recorded settlement' : 'Direct transfer';
 
     if (editingItem) {
       await dbClient.updateItem(
         sheetId,
         editingItem.item.itemID,
-        transferTitle,
+        itemName,
         amount,
         fromId,
         [{ contributorId: toId, weight: amount }],
-        itemType === ITEM_TYPE.TYPE_SETTLEMENT ? 'Marked as paid' : 'Money transfer'
+        notes
       );
       setEditingItem(null);
     } else {
       await dbClient.insertItem(
         sheetId,
-        transferTitle,
+        itemName,
         amount,
         fromId,
         Date.now(),
         [{ contributorId: toId, weight: amount }],
-        itemType === ITEM_TYPE.TYPE_SETTLEMENT ? 'Marked as paid' : 'Money transfer',
+        notes,
         itemType
       );
     }
@@ -217,18 +229,15 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
     }
   };
 
-  const handleRecordSettlement = async (
-    debtorName: string,
-    receiverName: string,
-    amount: number
-  ) => {
-    const debtor = contributors.find((c) => c.contributorName === debtorName);
-    const receiver = contributors.find((c) => c.contributorName === receiverName);
+  const handleRecordSettlement = async (debtorName: string, receiverName: string, amount: number) => {
+    const debtor = contributors.find((c) => c.contributorName.toLowerCase() === debtorName.toLowerCase());
+    const receiver = contributors.find((c) => c.contributorName.toLowerCase() === receiverName.toLowerCase());
+
     if (!debtor || !receiver) return;
 
     await dbClient.insertItem(
       sheetId,
-      `${debtorName} paid ${receiverName}`,
+      `${debtor.contributorName} paid ${receiver.contributorName}`,
       amount,
       debtor.contributorID,
       Date.now(),
@@ -238,105 +247,107 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
     );
   };
 
-  const getDeleteWarning = (it: ItemWithPayerAndConsumers) => {
-    const formatted = formatCurrency(it.item.amount);
-    switch (it.item.itemType) {
+  const getDeleteWarning = (item: ItemWithPayerAndConsumers) => {
+    switch (item.item.itemType) {
       case ITEM_TYPE.TYPE_SETTLEMENT:
         return {
-          title: 'Delete payment?',
-          message: `Are you sure you want to delete payment "${it.item.itemName}" (${formatted})? Sheet balances will be recalculated.`,
+          title: 'Delete payment record?',
+          message: `Deleting this payment will revert member balances. Are you sure you want to delete "${item.item.itemName}"?`,
         };
       case ITEM_TYPE.TYPE_MONEY_TRANSFER:
         return {
           title: 'Delete money transfer?',
-          message: `Are you sure you want to delete transfer "${it.item.itemName}" (${formatted})? Sheet balances will be recalculated.`,
+          message: `Are you sure you want to delete "${item.item.itemName}"?`,
         };
       case ITEM_TYPE.TYPE_CARRYOVER:
         return {
           title: 'Delete carried balance?',
-          message: `Are you sure you want to delete carried balance "${it.item.itemName}" (${formatted})? Carried balances from the previous sheet will change.`,
+          message: `This balance was carried forward from a cloned sheet. Deleting it will drop the carried balance. Proceed?`,
         };
       default:
         return {
           title: 'Delete expense?',
-          message: `Are you sure you want to delete "${it.item.itemName}" (${formatted})? Sheet balances will be recalculated.`,
+          message: `Are you sure you want to delete "${item.item.itemName}" (${formatCurrency(item.item.amount)})?`,
         };
     }
   };
 
   return (
     <div
-      className="min-h-screen max-w-xl mx-auto flex flex-col px-4 pt-3 pb-24 relative"
+      className="min-h-screen max-w-xl mx-auto flex flex-col px-4 pt-2 pb-28 relative select-none animate-activity-morph-enter"
       onClick={() => {
         setActiveMenuItemId(null);
         setIsAddOptionsOpen(false);
       }}
     >
-      {/* Top Bar */}
-      <header className="flex items-center justify-between h-14">
+      {/* Top Bar matching sheetTopBar in sheet_view.xml */}
+      <header className="flex items-center justify-between h-[60px] px-1">
         <button
           type="button"
           onClick={onBack}
-          className="p-2 rounded-full hover:bg-surfaceAlt text-iconTint transition-colors"
+          className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surfaceAlt text-iconTint active:scale-95 transition-all shrink-0"
           title="Back to sheets"
         >
           <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
         </button>
 
-        <div className="flex-1 overflow-x-auto no-scrollbar mx-2">
-          <h1 className="text-lg font-bold text-textPrimary tracking-tight whitespace-nowrap">
+        <div className="flex-1 min-w-0 mx-2 overflow-x-auto no-scrollbar">
+          <h1 className="text-[18px] font-bold text-textPrimary tracking-tight truncate whitespace-nowrap">
             {sheet?.sheetName || 'Sheet'}
           </h1>
         </div>
 
-        {itemsWithDetails.length >= 2 && (
+        {itemsWithDetails.length >= 2 ? (
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               setIsSortOpen(true);
             }}
-            className="p-2 rounded-full hover:bg-surfaceAlt text-iconTint transition-colors shrink-0"
+            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surfaceAlt text-iconTint active:scale-95 transition-all shrink-0"
             title="Sort expenses"
           >
-            <ArrowUpDown className="w-5 h-5 stroke-[2.2]" />
+            <ArrowUpDown className="w-5 h-5 stroke-[2]" />
           </button>
+        ) : (
+          <div className="w-10 h-10 shrink-0" />
         )}
       </header>
 
-      {/* Hero Card: TOTAL SPENT */}
-      <div className="mt-2 p-6 rounded-3xl [background:var(--hero-gradient)] shadow-xl text-white relative overflow-hidden">
+      {/* Hero Card matching summaryCard in sheet_view.xml */}
+      <div className="rounded-2xl p-[22px] bg-gradient-to-br from-[#111827] via-[#182132] to-[#1F2937] dark:from-[#161F30] dark:via-[#1B2538] dark:to-[#222E44] shadow-md border border-cardStroke/20 my-1">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-white/70">
+          <span className="text-[11px] font-bold tracking-[0.12em] text-white/60 uppercase">
             TOTAL SPENT
           </span>
           {isReadOnly && (
-            <span className="px-2.5 py-1 rounded-xl bg-surface/15 text-[10px] font-extrabold tracking-wider text-carryAccent border border-carryAccent/30 backdrop-blur-sm">
+            <span className="px-2.5 py-1 rounded-[10px] bg-white/10 text-carryAccent text-[10px] font-extrabold tracking-[0.1em] uppercase">
               READ ONLY
             </span>
           )}
         </div>
-        <p className="mt-2 text-4xl font-extrabold tracking-tight text-white">
+
+        <div className="text-[36px] font-bold text-white tracking-tight leading-none mt-2">
           {formatCurrency(totalSpent)}
-        </p>
+        </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative mt-4">
-        <div className="flex items-center h-12 px-4 rounded-2xl bg-surface border border-cardStroke shadow-sm">
+      {/* Search Expenses Bar matching searchExpensesContainer in sheet_view.xml */}
+      <div className="relative my-2.5">
+        <div className="flex items-center h-[46px] px-3.5 rounded-2xl bg-surface border border-cardStroke shadow-sm">
           <Search className="w-4 h-4 text-textHint shrink-0" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search expenses, payer, or people..."
-            className="w-full ml-3 bg-transparent text-sm text-textPrimary placeholder:text-textHint focus:outline-none"
+            className="w-full ml-2.5 bg-transparent text-sm text-textPrimary placeholder:text-textHint focus:outline-none"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="p-1 rounded-full text-textHint hover:text-textPrimary"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-textHint hover:text-textPrimary shrink-0"
             >
               <X className="w-4 h-4" />
             </button>
@@ -344,25 +355,25 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
         </div>
       </div>
 
-      {/* Section Header */}
-      <div className="mt-4 mb-2 px-1">
-        <span className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-textHint">
+      {/* Section Header matching tv_recent_expenses_label */}
+      <div className="px-1 mt-1 mb-1.5">
+        <span className="text-[11px] font-bold tracking-[0.12em] text-textHint uppercase">
           EXPENSES
         </span>
       </div>
 
-      {/* Expenses List */}
-      <main className="flex-1 space-y-3">
+      {/* Expense List matching expense_card.xml in Android */}
+      <main className="flex-1 space-y-2.5">
         {loading ? (
           <div className="py-20 text-center text-sm font-medium text-textHint">
             Loading expenses...
           </div>
         ) : filteredAndSortedItems.length === 0 ? (
-          <div className="py-14 px-6 text-center rounded-3xl bg-surface border border-cardStroke shadow-sm">
+          <div className="py-14 px-6 text-center rounded-2xl bg-surface border border-cardStroke shadow-sm">
             <p className="text-sm font-semibold text-textSecondary">
-              {itemsWithDetails.length === 0
-                ? 'Long press expense card to see more options'
-                : 'No expenses match your search'}
+              {searchQuery
+                ? 'No expenses match your search'
+                : 'Long press expense card to see more options'}
             </p>
           </div>
         ) : (
@@ -370,13 +381,14 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
             const { item: expense, payer, consumers } = item;
             const isMenuOpen = activeMenuItemId === expense.itemID;
 
-            // Card styling by itemType
+            // Style variations matching expense_card.xml & Android colors
             let cardBg = 'bg-surface border-cardStroke';
             let iconText = '₹';
-            let iconBg = 'bg-surfaceAlt text-textPrimary';
+            let iconBg = 'bg-surfaceAlt border border-cardStroke text-textPrimary';
             let amountColor = 'text-textPrimary';
             let payerLabel = 'Paid by';
             let splitLabel = 'Split between';
+
             let consumersDisplay =
               consumers.length > 3
                 ? `Everyone (${consumers.length})`
@@ -416,27 +428,30 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
                   e.preventDefault();
                   setActiveMenuItemId(expense.itemID);
                 }}
-                className={`relative p-4 rounded-3xl border shadow-sm hover:shadow-md transition-all cursor-pointer ${cardBg}`}
+                className={`relative p-4 rounded-2xl border shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer ${cardBg}`}
               >
+                {/* Header row: Icon bubble + Name & Date + Amount & 3-dot */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
+                    {/* 42x42dp bubble matching bg_icon_bubble */}
                     <div
-                      className={`w-9 h-9 rounded-2xl flex items-center justify-center font-bold text-base shrink-0 ${iconBg}`}
+                      className={`w-[42px] h-[42px] rounded-xl flex items-center justify-center font-bold text-lg shrink-0 ${iconBg}`}
                     >
                       {iconText}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-bold text-textPrimary tracking-tight truncate">
+
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      <h3 className="text-[17px] font-bold text-textPrimary tracking-tight truncate leading-snug">
                         {expense.itemName}
                       </h3>
-                      <p className="text-[11px] text-textHint mt-0.5">
+                      <p className="text-[12px] text-textHint mt-0.5">
                         {formatExpenseDate(expense.dateCreated)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    <span className={`text-base font-extrabold ${amountColor}`}>
+                  <div className="flex items-center gap-1 shrink-0 pt-0.5">
+                    <span className={`text-[17px] font-bold ${amountColor}`}>
                       {formatCurrency(expense.amount)}
                     </span>
                     <button
@@ -445,29 +460,34 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
                         e.stopPropagation();
                         setActiveMenuItemId(isMenuOpen ? null : expense.itemID);
                       }}
-                      className="p-1 rounded-full text-textHint hover:text-textPrimary"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-textHint hover:text-textPrimary"
                     >
                       <MoreVertical className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
-                {/* Meta panel */}
-                <div className="mt-3.5 p-3 rounded-2xl bg-surface/50 border border-cardStroke/40 text-xs flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <span className="text-textHint">{payerLabel} </span>
-                    <span className="font-bold text-textPrimary">{payer.contributorName}</span>
+                {/* Nested Meta Panel matching bg_nested_panel in expense_card.xml */}
+                <div className="mt-3.5 p-3 rounded-[10px] bg-surfaceAlt/80 border border-cardStroke/30 space-y-2">
+                  <div className="flex items-center justify-between text-[13px] gap-2">
+                    <span className="text-textSecondary">{payerLabel}</span>
+                    <span className="font-bold text-textPrimary truncate max-w-[180px]">
+                      {payer.contributorName}
+                    </span>
                   </div>
-                  <div>
-                    <span className="text-textHint">{splitLabel} </span>
-                    <span className="font-bold text-textPrimary">{consumersDisplay || 'None'}</span>
+
+                  <div className="flex items-center justify-between text-[13px] gap-2">
+                    <span className="text-textSecondary">{splitLabel}</span>
+                    <span className="font-bold text-textPrimary truncate max-w-[180px]">
+                      {consumersDisplay || 'Everyone'}
+                    </span>
                   </div>
                 </div>
 
-                {/* Card Overflow Menu */}
+                {/* Card Overflow Menu matching popup_layout.xml */}
                 {isMenuOpen && (
                   <div
-                    className="absolute right-4 top-12 z-30 w-36 rounded-2xl bg-surface p-1.5 shadow-xl border border-cardStroke animate-morph-in"
+                    className="absolute right-4 top-12 z-30 w-36 rounded-2xl bg-surface py-1.5 shadow-xl border border-cardStroke animate-popup-morph-enter origin-top-right"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {!isReadOnly && (
@@ -485,11 +505,14 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
                             setIsMoneyTransferOpen(true);
                           }
                         }}
-                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-textPrimary hover:bg-surfaceAlt transition-colors"
+                        className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-2.5 transition-colors"
                       >
-                        Edit
+                        <Pencil className="w-3.5 h-3.5 text-textSecondary" />
+                        <span>Edit</span>
                       </button>
                     )}
+
+                    {!isReadOnly && <div className="border-t border-cardStroke" />}
 
                     <button
                       type="button"
@@ -497,23 +520,25 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
                         setActiveMenuItemId(null);
                         setDetailsItem(item);
                       }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-textPrimary hover:bg-surfaceAlt transition-colors"
+                      className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-2.5 transition-colors"
                     >
-                      Details
+                      <Info className="w-3.5 h-3.5 text-textSecondary" />
+                      <span>Details</span>
                     </button>
 
                     {!isReadOnly && (
                       <>
-                        <div className="my-1 border-t border-cardStroke" />
+                        <div className="border-t border-cardStroke" />
                         <button
                           type="button"
                           onClick={() => {
                             setActiveMenuItemId(null);
                             setDeletingItem(item);
                           }}
-                          className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-giveText hover:bg-giveText/10 transition-colors"
+                          className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-giveText hover:bg-giveText/10 flex items-center gap-2.5 transition-colors"
                         >
-                          Delete
+                          <Trash2 className="w-3.5 h-3.5 text-giveText" />
+                          <span>Delete</span>
                         </button>
                       </>
                     )}
@@ -525,14 +550,14 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
         )}
       </main>
 
-      {/* Bottom Sticky Action Bar */}
-      <footer className="fixed bottom-0 left-0 right-0 z-30 p-4 bg-gradient-to-t from-bgEnd via-bgEnd/90 to-transparent">
+      {/* Bottom Sticky Action Bar matching sheet_view.xml */}
+      <footer className="fixed bottom-0 left-0 right-0 z-30 p-4 pb-5 bg-gradient-to-t from-bgEnd via-bgEnd/95 to-transparent">
         <div className="max-w-xl mx-auto flex items-center gap-3">
           {itemsWithDetails.length > 0 && (
             <button
               type="button"
               onClick={() => setIsBalancesOpen(true)}
-              className="flex-1 h-13 py-3.5 px-4 rounded-2xl bg-surface hover:bg-surfaceAlt text-textPrimary font-bold text-sm shadow-md border border-cardStroke active:scale-[0.98] transition-all"
+              className="flex-1 h-[52px] px-4 rounded-xl bg-surface hover:bg-surfaceAlt text-textPrimary font-bold text-[15px] shadow-sm border border-cardStroke active:scale-[0.98] transition-all"
             >
               Calculate
             </button>
@@ -540,9 +565,10 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
 
           {!isReadOnly && (
             <div className="relative flex-1">
+              {/* Popover options for + Add Expense matching popup_add_expense_options.xml */}
               {isAddOptionsOpen && (
                 <div
-                  className="absolute bottom-16 right-0 w-48 rounded-2xl bg-surface p-1.5 shadow-2xl border border-cardStroke animate-morph-in mb-2 space-y-1"
+                  className="absolute bottom-16 right-0 w-48 rounded-2xl bg-surface py-1.5 shadow-2xl border border-cardStroke animate-popup-morph-enter origin-bottom-right mb-2"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
@@ -552,11 +578,13 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
                       setEditingItem(null);
                       setIsAddExpenseOpen(true);
                     }}
-                    className="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold text-textPrimary hover:bg-surfaceAlt flex items-center gap-2.5 transition-colors"
+                    className="w-full text-left px-4 py-3 text-sm font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
                   >
-                    <Receipt className="w-4 h-4 text-textHint" />
-                    Add Expense
+                    <Receipt className="w-4 h-4 text-textSecondary" />
+                    <span>Add Expense</span>
                   </button>
+
+                  <div className="border-t border-cardStroke" />
 
                   <button
                     type="button"
@@ -565,10 +593,10 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
                       setEditingItem(null);
                       setIsMoneyTransferOpen(true);
                     }}
-                    className="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold text-textPrimary hover:bg-surfaceAlt flex items-center gap-2.5 transition-colors"
+                    className="w-full text-left px-4 py-3 text-sm font-semibold text-textPrimary hover:bg-surfaceAlt flex items-center gap-3 transition-colors"
                   >
-                    <ArrowRightLeft className="w-4 h-4 text-textHint" />
-                    Money Transfer
+                    <ArrowRightLeft className="w-4 h-4 text-textSecondary" />
+                    <span>Money Transfer</span>
                   </button>
                 </div>
               )}
@@ -586,15 +614,15 @@ export const SheetViewPage: React.FC<SheetViewPageProps> = ({ sheetId, onBack })
                 onTouchStart={() => {
                   longPressTimer.current = window.setTimeout(() => {
                     setIsAddOptionsOpen(true);
-                  }, 500);
+                  }, 450);
                 }}
                 onTouchEnd={() => {
                   if (longPressTimer.current) clearTimeout(longPressTimer.current);
                 }}
-                className="w-full h-13 py-3.5 px-4 rounded-2xl bg-btnPrimaryBg text-btnPrimaryText font-bold text-sm shadow-lg hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="w-full h-[52px] px-4 rounded-xl bg-btnPrimaryBg text-btnPrimaryText font-bold text-[15px] shadow-md hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
-                Add Expense
+                <span>Add Expense</span>
               </button>
             </div>
           )}

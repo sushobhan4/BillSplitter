@@ -21,43 +21,46 @@ export const ExportSheetDialog: React.FC<ExportSheetDialogProps> = ({
   if (!isOpen || !item) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-backdrop-in"
+      onClick={onClose}
+    >
       <div
-        className="w-full max-w-sm rounded-3xl bg-surface p-6 shadow-2xl border border-cardStroke animate-morph-in"
+        className="w-full max-w-sm rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl border border-cardStroke animate-dialog-morph-enter my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-3 border-b border-cardStroke">
-          <div>
+          <div className="min-w-0 pr-2">
             <h2 className="text-lg font-bold text-textPrimary tracking-tight">Export Sheet</h2>
-            <p className="text-xs text-textSecondary truncate max-w-[220px]">
+            <p className="text-xs text-textSecondary truncate">
               {item.sheet.sheetName}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-surfaceAlt text-textHint hover:text-textPrimary transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-textHint hover:text-textPrimary transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Read-Only Option */}
-        <div className="mt-5 p-4 rounded-2xl bg-surfaceAlt border border-cardStroke">
-          <label className="flex items-start gap-3 cursor-pointer">
+        <div className="mt-4 p-3.5 rounded-xl bg-surfaceAlt border border-cardStroke">
+          <label className="flex items-start gap-3 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={isOriginallyReadOnly || makeReadOnly}
               disabled={isOriginallyReadOnly}
               onChange={(e) => setMakeReadOnly(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded text-btnPrimaryBg accent-textPrimary"
+              className="mt-0.5 w-4 h-4 rounded text-btnPrimaryBg accent-btnPrimaryBg shrink-0"
             />
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-bold text-textPrimary">Export as read-only</span>
                 <Lock className="w-3.5 h-3.5 text-textSecondary" />
               </div>
-              <p className="mt-1 text-xs text-textSecondary leading-relaxed">
+              <p className="mt-0.5 text-xs text-textSecondary leading-relaxed">
                 {isOriginallyReadOnly
                   ? 'This sheet is strictly read-only and can only be exported as read-only.'
                   : 'Recipients can view expenses and balances, but cannot edit, add, or delete items.'}
@@ -67,14 +70,14 @@ export const ExportSheetDialog: React.FC<ExportSheetDialogProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-5 space-y-2.5">
+        <div className="mt-4 space-y-2.5">
           <button
             type="button"
             onClick={() => {
               onExport(isOriginallyReadOnly || makeReadOnly, 'share');
               onClose();
             }}
-            className="w-full py-3 px-4 rounded-2xl bg-btnPrimaryBg text-btnPrimaryText font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+            className="w-full h-[46px] rounded-xl bg-btnPrimaryBg text-btnPrimaryText font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-sm"
           >
             <Share2 className="w-4 h-4" />
             Share (.bsplit)
@@ -86,7 +89,7 @@ export const ExportSheetDialog: React.FC<ExportSheetDialogProps> = ({
               onExport(isOriginallyReadOnly || makeReadOnly, 'save');
               onClose();
             }}
-            className="w-full py-3 px-4 rounded-2xl bg-surfaceAlt hover:bg-surfaceHigh text-textPrimary font-semibold text-sm flex items-center justify-center gap-2 border border-cardStroke transition-colors"
+            className="w-full h-[46px] rounded-xl bg-surfaceAlt hover:bg-surfaceHigh text-textPrimary font-bold text-sm flex items-center justify-center gap-2 border border-cardStroke transition-colors"
           >
             <Download className="w-4 h-4" />
             Save to Device
